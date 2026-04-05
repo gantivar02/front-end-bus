@@ -1,7 +1,7 @@
 import api from "../../../services/api";
 
 export async function getRolesByUser(userId) {
-  const response = await api.get(`/user-role/${userId}/roles`);
+  const response = await api.get(`/user-role/user/${userId}`);
   return response.data;
 }
 

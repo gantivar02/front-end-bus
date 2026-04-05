@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import Table from "../../../components/ui/Table";
 import PageHeader from "../../../components/ui/PageHeader";
 import ActionButtons from "../../../components/ui/ActionButtons";
@@ -17,20 +17,20 @@ export default function UserRolesPage() {
   const [roles, setRoles] = useState([]);
   const [userRoles, setUserRoles] = useState([]);
   const [selectedUserId, setSelectedUserId] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [assignLoading, setAssignLoading] = useState(false);
   const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
   const loadInitialData = async () => {
     try {
       setLoading(true);
       setError("");
-
       const [usersData, rolesData] = await Promise.all([
         getUsers(),
         getRoles(),
       ]);
-
       setUsers(usersData);
       setRoles(rolesData);
     } catch {
@@ -45,7 +45,6 @@ export default function UserRolesPage() {
       setUserRoles([]);
       return;
     }
-
     try {
       setError("");
       const data = await getRolesByUser(userId);
@@ -63,12 +62,40 @@ export default function UserRolesPage() {
     loadUserRoles(selectedUserId);
   }, [selectedUserId]);
 
+  // Filtrar usuarios por nombre o email según búsqueda
+  const filteredUsers = useMemo(() => {
+    const q = searchQuery.toLowerCase().trim();
+    if (!q) return users;
+    return users.filter(
+      (u) =>
+        u.name?.toLowerCase().includes(q) ||
+        u.email?.toLowerCase().includes(q)
+    );
+  }, [users, searchQuery]);
+
+  // Roles que el usuario seleccionado aún no tiene asignados
+  const assignedRoleIds = useMemo(
+    () => new Set(userRoles.map((ur) => ur.role?.id || ur.role?._id)),
+    [userRoles]
+  );
+
+  const availableRoles = useMemo(
+    () => roles.filter((r) => !assignedRoleIds.has(r.id || r._id)),
+    [roles, assignedRoleIds]
+  );
+
+  const showSuccess = (msg) => {
+    setSuccessMessage(msg);
+    setTimeout(() => setSuccessMessage(""), 3500);
+  };
+
   const handleAssign = async (roleId) => {
     try {
       setAssignLoading(true);
       setError("");
       await assignRoleToUser(selectedUserId, roleId);
       await loadUserRoles(selectedUserId);
+      showSuccess("Rol asignado correctamente. El usuario recibirá una notificación por email.");
     } catch {
       setError("No fue posible asignar el rol al usuario");
     } finally {
@@ -81,17 +108,20 @@ export default function UserRolesPage() {
     const confirmed = window.confirm(
       "¿Seguro que deseas quitar este rol del usuario?"
     );
-
     if (!confirmed) return;
-
     try {
       setError("");
       await removeUserRole(relationId);
       await loadUserRoles(selectedUserId);
+      showSuccess("Rol removido. El usuario recibirá una notificación por email.");
     } catch {
       setError("No fue posible eliminar la relación");
     }
   };
+
+  const selectedUser = users.find(
+    (u) => (u.id || u._id) === selectedUserId
+  );
 
   const columns = [
     {
@@ -124,20 +154,53 @@ export default function UserRolesPage() {
         description="Asigna roles a los usuarios del sistema."
       />
 
-      {error && <p style={{ color: "crimson" }}>{error}</p>}
+      {error && <p className={styles.error}>{error}</p>}
+      {successMessage && <p className={styles.success}>{successMessage}</p>}
 
       {loading ? (
         <p>Cargando datos...</p>
       ) : (
         <>
+          {/* Buscador de usuarios */}
+          <div className={styles.searchBar}>
+            <input
+              type="text"
+              placeholder="Buscar usuario por nombre o email..."
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setSelectedUserId("");
+              }}
+              className={styles.searchInput}
+            />
+          </div>
+
           <AssignRoleForm
-            users={users}
-            roles={roles}
+            users={filteredUsers}
+            roles={availableRoles}
+            allRolesCount={roles.length}
             selectedUserId={selectedUserId}
             onUserChange={setSelectedUserId}
             onAssign={handleAssign}
             loading={assignLoading}
           />
+
+          {selectedUser && (
+            <div className={styles.sectionTitle}>
+              <h3>
+                Roles asignados a{" "}
+                <strong>{selectedUser.name}</strong>
+                {userRoles.length > 0 && (
+                  <span className={styles.badge}>{userRoles.length}</span>
+                )}
+              </h3>
+              {userRoles.length > 1 && (
+                <p className={styles.hint}>
+                  Los permisos se acumulan entre todos los roles asignados.
+                </p>
+              )}
+            </div>
+          )}
 
           <Table
             columns={columns}

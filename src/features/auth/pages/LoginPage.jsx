@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import api from "../../../services/api";
 import { useAuth } from "../../../context/AuthContext";
 
+import LoginMicrosoft from "../components/LoginMicrosoft";
+import LoginGoogle from "../components/LoginGoogle";
 export default function LoginPage() {
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -72,6 +74,21 @@ export default function LoginPage() {
         <button type="submit" disabled={loading}>
           {loading ? "Ingresando..." : "Entrar"}
         </button>
+        <hr />
+
+        <LoginMicrosoft
+          onSuccess={(token) => {
+            login(token);
+            navigate("/dashboard");
+          }}
+        />
+
+        <LoginGoogle
+          onSuccess={(token) => {
+            login(token);
+            navigate("/dashboard");
+          }}
+        />
       </form>
     </div>
   );
