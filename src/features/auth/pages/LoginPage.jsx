@@ -39,7 +39,7 @@ export default function LoginPage() {
 
       login(token);
       navigate("/dashboard");
-    } catch (err) {
+    } catch (err) {console.log("Error:", err.response?.status, err.response?.data);
       setError("No fue posible iniciar sesión");
     } finally {
       setLoading(false);

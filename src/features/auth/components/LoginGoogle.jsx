@@ -7,7 +7,7 @@ export default function LoginGoogle({ onSuccess }) {
 
     console.log("GOOGLE TOKEN:", token);
 
-    const res = await fetch("http://localhost:8081/sessions/google", {
+    const res = await fetch("http://localhost:8081/api/public/security/login-google", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -19,7 +19,7 @@ export default function LoginGoogle({ onSuccess }) {
     console.log("Respuesta backend:", data);
 
     if (data.token) {
-      onSuccess(data.token); // 🔥 ESTA ES LA CLAVE
+      onSuccess(data.token);
     }
   };
 
