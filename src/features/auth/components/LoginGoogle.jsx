@@ -7,7 +7,7 @@ export default function LoginGoogle({ onSuccess }) {
 
     console.log("GOOGLE TOKEN:", token);
 
-    const res = await fetch("http://localhost:8081/api/public/security/login-google", {
+    const res = await fetch("http://localhost:8081/api/security/login-google", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
