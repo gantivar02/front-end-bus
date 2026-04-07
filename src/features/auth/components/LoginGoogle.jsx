@@ -1,32 +1,32 @@
-import { GoogleLogin } from '@react-oauth/google';
+    import { GoogleLogin } from '@react-oauth/google';
 
-export default function LoginGoogle({ onSuccess }) {
+    export default function LoginGoogle({ onSuccess }) {
 
-  const handleSuccess = async (credentialResponse) => {
-    const token = credentialResponse.credential;
+      const handleSuccess = async (credentialResponse) => {
+        const token = credentialResponse.credential;
 
-    console.log("GOOGLE TOKEN:", token);
+        console.log("GOOGLE TOKEN:", token);
 
-    const res = await fetch("http://localhost:8081/api/security/login-google", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ token })
-    });
+        const res = await fetch("http://localhost:8081/api/public/security/login-google", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ token })
+        }); 
 
-    const data = await res.json();
-    console.log("Respuesta backend:", data);
+        const data = await res.json();
+        console.log("Respuesta backend:", data);
 
-    if (data.token) {
-      onSuccess(data.token);
+        if (data.token) {
+          onSuccess(data.token);
+        }
+      };
+
+      return (
+        <GoogleLogin
+          onSuccess={handleSuccess}
+          onError={() => console.log("Error login Google")}
+        />
+      );
     }
-  };
-
-  return (
-    <GoogleLogin
-      onSuccess={handleSuccess}
-      onError={() => console.log("Error login Google")}
-    />
-  );
-}
