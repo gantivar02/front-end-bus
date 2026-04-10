@@ -73,13 +73,16 @@ export default function UsersPage() {
       setShowForm(false);
       setSelectedUser(null);
       await loadUsers();
-    } catch {
-      setError("No fue posible guardar el usuario");
+    } catch (err) {
+      console.log("Error completo:", err.response?.data);
+      const backendMessage = err.response?.data?.message
+        || (Array.isArray(err.response?.data) ? err.response.data.map(e => e.defaultMessage).join(", ") : null)
+        || "No fue posible guardar el usuario";
+      setError(backendMessage);
     } finally {
       setFormLoading(false);
     }
   };
-
   const handleDelete = async (user) => {
     const userId = user.id || user._id;
     const confirmed = window.confirm(
