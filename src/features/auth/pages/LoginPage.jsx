@@ -30,17 +30,23 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const response = await api.post("/security/login", form);
-      const token = response.data?.token;
+      const response = await api.post("/public/security/login", form);
+      const sessionId = response.data?.token;
 
-      if (!token) {
+
+      if (!sessionId) {
         throw new Error("No se recibió token");
       }
 
-      login(token);
-      navigate("/dashboard");
+      navigate("/verify-2fa", {
+      state: {
+        sessionId: response.data.sessionId,
+        maskedEmail: response.data.maskedEmail,
+        expiration: response.data.expiration,
+      },
+    });
     } catch (err) {console.log("Error:", err.response?.status, err.response?.data);
-      setError("No fue posible iniciar sesión");
+      setError(err.response?.data?.message ||"No fue posible iniciar sesión");
     } finally {
       setLoading(false);
     }
