@@ -6,11 +6,35 @@ import AssignPermissionForm from "../components/AssignPermissionForm";
 import { getRoles } from "../../roles/services/rolesService";
 import { getPermissions } from "../../permissions/services/permissionsService";
 import {
+  formatPermissionLabel,
+  getEntityId,
+  getPermissionAction,
+  getPermissionData,
+  getPermissionDescription,
+  getPermissionId,
+  getPermissionMethod,
+  getPermissionModule,
+  getPermissionName,
+  getPermissionUrl,
+} from "../../permissions/utils/permissionUtils";
+import {
   getPermissionsByRole,
   assignPermissionToRole,
   removeRolePermission,
 } from "../services/rolePermissionService";
 import styles from "./RolePermissionsPage.module.css";
+
+const methodToneMap = {
+  GET: "methodGet",
+  POST: "methodPost",
+  PUT: "methodPut",
+  PATCH: "methodPatch",
+  DELETE: "methodDelete",
+};
+
+function getMethodToneClass(method) {
+  return styles[methodToneMap[method] || "methodDefault"];
+}
 
 export default function RolePermissionsPage() {
   const [roles, setRoles] = useState([]);
@@ -20,6 +44,11 @@ export default function RolePermissionsPage() {
   const [loading, setLoading] = useState(true);
   const [assignLoading, setAssignLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const selectedRole = roles.find((role) => getEntityId(role) === selectedRoleId);
+  const assignedPermissionIds = rolePermissions
+    .map((item) => getPermissionId(item))
+    .filter(Boolean);
 
   const loadInitialData = async () => {
     try {
@@ -33,8 +62,11 @@ export default function RolePermissionsPage() {
 
       setRoles(rolesData);
       setPermissions(permissionsData);
-    } catch {
-      setError("No se pudieron cargar roles y permisos");
+    } catch (currentError) {
+      setError(
+        currentError.response?.data?.message ||
+          "No se pudieron cargar roles y permisos"
+      );
     } finally {
       setLoading(false);
     }
@@ -50,8 +82,11 @@ export default function RolePermissionsPage() {
       setError("");
       const data = await getPermissionsByRole(roleId);
       setRolePermissions(data);
-    } catch {
-      setError("No se pudieron cargar los permisos del rol");
+    } catch (currentError) {
+      setError(
+        currentError.response?.data?.message ||
+          "No se pudieron cargar los permisos del rol"
+      );
     }
   };
 
@@ -69,50 +104,104 @@ export default function RolePermissionsPage() {
       setError("");
       await assignPermissionToRole(selectedRoleId, permissionId);
       await loadRolePermissions(selectedRoleId);
-    } catch {
-      setError("No fue posible asignar el permiso al rol");
+    } catch (currentError) {
+      setError(
+        currentError.response?.data?.message ||
+          "No fue posible asignar el permiso al rol"
+      );
     } finally {
       setAssignLoading(false);
     }
   };
 
   const handleRemove = async (rolePermission) => {
-    const relationId = rolePermission.id || rolePermission._id;
+    const permission = getPermissionData(rolePermission);
+    const permissionId = getPermissionId(rolePermission);
     const confirmed = window.confirm(
-      `¿Seguro que deseas quitar este permiso del rol?`
+      `¿Seguro que deseas quitar el permiso ${getPermissionName(permission)} del rol?`
     );
 
-    if (!confirmed) return;
+    if (!confirmed) {
+      return;
+    }
+
+    if (!selectedRoleId || !permissionId) {
+      setError("No se pudo identificar el permiso que se desea quitar");
+      return;
+    }
 
     try {
       setError("");
-      await removeRolePermission(relationId);
+      await removeRolePermission(selectedRoleId, permissionId);
       await loadRolePermissions(selectedRoleId);
-    } catch {
-      setError("No fue posible eliminar la relación");
+    } catch (currentError) {
+      setError(
+        currentError.response?.data?.message ||
+          "No fue posible quitar el permiso del rol"
+      );
     }
   };
 
   const columns = [
     {
-      key: "id",
-      title: "ID Relación",
-      render: (item) => item.id || item._id,
+      key: "permission",
+      title: "Permiso",
+      render: (item) => {
+        const permission = getPermissionData(item);
+
+        return (
+          <div className={styles.permissionCell}>
+            <div className={styles.permissionHeader}>
+              <strong className={styles.permissionName}>
+                {getPermissionName(permission)}
+              </strong>
+              <span className={styles.permissionId}>
+                ID {getPermissionId(item)}
+              </span>
+            </div>
+            <p className={styles.permissionDescription}>
+              {getPermissionDescription(permission)}
+            </p>
+          </div>
+        );
+      },
     },
     {
-      key: "permissionMethod",
-      title: "Método",
-      render: (item) => item.permission?.method,
+      key: "scope",
+      title: "Alcance",
+      render: (item) => {
+        const permission = getPermissionData(item);
+
+        return (
+          <div className={styles.scopeCell}>
+            <span className={styles.scopeChip}>
+              {formatPermissionLabel(getPermissionModule(permission))}
+            </span>
+            <span className={`${styles.scopeChip} ${styles.scopeChipAccent}`}>
+              {formatPermissionLabel(getPermissionAction(permission))}
+            </span>
+          </div>
+        );
+      },
     },
     {
-      key: "permissionUrl",
-      title: "URL",
-      render: (item) => item.permission?.url,
-    },
-    {
-      key: "permissionModule",
-      title: "Módulo",
-      render: (item) => item.permission?.module,
+      key: "endpoint",
+      title: "Endpoint",
+      render: (item) => {
+        const permission = getPermissionData(item);
+        const method = getPermissionMethod(permission);
+
+        return (
+          <div className={styles.endpointCell}>
+            <span className={`${styles.methodBadge} ${getMethodToneClass(method)}`}>
+              {method}
+            </span>
+            <code className={styles.endpointCode}>
+              {getPermissionUrl(permission)}
+            </code>
+          </div>
+        );
+      },
     },
     {
       key: "actions",
@@ -131,33 +220,59 @@ export default function RolePermissionsPage() {
     <div className={styles.page}>
       <PageHeader
         title="Rol - Permisos"
-        description="Asigna permisos a los roles del sistema."
+        description="Asigna permisos a los roles del sistema y revisa rapidamente su alcance."
       />
 
-      {error && <p style={{ color: "crimson" }}>{error}</p>}
+      {error && <p className={styles.errorBanner}>{error}</p>}
 
       {loading ? (
-        <p>Cargando datos...</p>
+        <p className={styles.statusText}>Cargando datos...</p>
       ) : (
         <>
           <AssignPermissionForm
             roles={roles}
             permissions={permissions}
             selectedRoleId={selectedRoleId}
+            assignedPermissionIds={assignedPermissionIds}
             onRoleChange={setSelectedRoleId}
             onAssign={handleAssign}
             loading={assignLoading}
           />
 
-          <Table
-            columns={columns}
-            data={rolePermissions}
-            emptyMessage={
-              selectedRoleId
-                ? "Este rol no tiene permisos asignados."
-                : "Selecciona un rol para ver sus permisos."
-            }
-          />
+          <section className={styles.summaryCard}>
+            {selectedRole ? (
+              <>
+                <div>
+                  <span className={styles.summaryLabel}>Rol seleccionado</span>
+                  <h2 className={styles.summaryTitle}>{selectedRole.name}</h2>
+                  <p className={styles.summaryText}>
+                    {selectedRole.description || "Sin descripcion registrada."}
+                  </p>
+                </div>
+
+                <div className={styles.summaryCount}>
+                  <span>Permisos activos</span>
+                  <strong>{rolePermissions.length}</strong>
+                </div>
+              </>
+            ) : (
+              <p className={styles.summaryText}>
+                Selecciona un rol para consultar sus permisos asignados.
+              </p>
+            )}
+          </section>
+
+          <div className={styles.tableWrap}>
+            <Table
+              columns={columns}
+              data={rolePermissions}
+              emptyMessage={
+                selectedRoleId
+                  ? "Este rol no tiene permisos asignados."
+                  : "Selecciona un rol para ver sus permisos."
+              }
+            />
+          </div>
         </>
       )}
     </div>

@@ -12,7 +12,7 @@ export async function assignPermissionToRole(roleId, permissionId) {
   return response.data;
 }
 
-export async function removeRolePermission(rolePermissionId) {
-  const response = await api.delete(`/role-permission/${rolePermissionId}`);
+export async function removeRolePermission(roleId, permissionId) {
+  const response = await api.delete(`/role-permission/${roleId}/permission/${permissionId}`);
   return response.data;
 }
