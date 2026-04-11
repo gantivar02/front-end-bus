@@ -1,6 +1,10 @@
 import { Navigate, createBrowserRouter } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import MainLayout from "../components/layout/MainLayout";
 import LoginPage from "../features/auth/pages/LoginPage";
+import GithubCallbackPage from "../features/auth/pages/GithubCallbackPage";
+import ForgotPasswordPage from "../features/auth/pages/ForgotPasswordPage";
+import ResetPasswordPage from "../features/auth/pages/ResetPasswordPage";
 import DashboardPage from "../features/dashboard/pages/DashboardPage";
 import UsersPage from "../features/users/pages/UsersPage";
 import RolesPage from "../features/roles/pages/RolesPage";
@@ -10,16 +14,20 @@ import UserRolesPage from "../features/user-role/pages/UserRolesPage";
 import ProfilesPage from "../features/profiles/pages/ProfilesPage";
 import SessionsPage from "../features/sessions/pages/SessionsPage";
 
+// HU-009: usa AuthContext para proteger rutas autenticadas
 function PrivateRoute({ children }) {
-  const token = localStorage.getItem("token");
-  return token ? children : <Navigate to="/login" replace />;
+  const { isAuthenticated } = useAuth();
+  return isAuthenticated ? children : <Navigate to="/login" replace />;
 }
 
 export const router = createBrowserRouter([
-  {
-    path: "/login",
-    element: <LoginPage />,
-  },
+  // Rutas públicas
+  { path: "/login", element: <LoginPage /> },
+  { path: "/auth/github/callback", element: <GithubCallbackPage /> },   // HU-006
+  { path: "/forgot-password", element: <ForgotPasswordPage /> },         // HU-013
+  { path: "/reset-password", element: <ResetPasswordPage /> },           // HU-013
+
+  // Rutas protegidas
   {
     path: "/",
     element: (

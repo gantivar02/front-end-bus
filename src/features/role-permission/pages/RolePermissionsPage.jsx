@@ -110,9 +110,9 @@ export default function RolePermissionsPage() {
       render: (item) => item.permission?.url,
     },
     {
-      key: "permissionModel",
-      title: "Modelo",
-      render: (item) => item.permission?.model,
+      key: "permissionModule",
+      title: "Módulo",
+      render: (item) => item.permission?.module,
     },
     {
       key: "actions",

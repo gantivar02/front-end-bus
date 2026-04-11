@@ -48,7 +48,7 @@ export default function AssignPermissionForm({
                 key={permission.id || permission._id}
                 value={permission.id || permission._id}
               >
-                {permission.method} {permission.url} - {permission.model}
+                {permission.method} {permission.url} — {permission.module}
               </option>
             ))}
           </select>
