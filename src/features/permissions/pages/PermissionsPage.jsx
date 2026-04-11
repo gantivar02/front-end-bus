@@ -10,7 +10,30 @@ import {
   updatePermission,
   deletePermission,
 } from "../services/permissionsService";
+import {
+  formatPermissionLabel,
+  getEntityId,
+  getPermissionAction,
+  getPermissionDescription,
+  getPermissionMethod,
+  getPermissionModule,
+  getPermissionName,
+  getPermissionUrl,
+  matchesPermissionSearch,
+} from "../utils/permissionUtils";
 import styles from "./PermissionsPage.module.css";
+
+const methodToneMap = {
+  GET: "methodGet",
+  POST: "methodPost",
+  PUT: "methodPut",
+  PATCH: "methodPatch",
+  DELETE: "methodDelete",
+};
+
+function getMethodToneClass(method) {
+  return styles[methodToneMap[method] || "methodDefault"];
+}
 
 export default function PermissionsPage() {
   const [permissions, setPermissions] = useState([]);
@@ -19,6 +42,7 @@ export default function PermissionsPage() {
   const [error, setError] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [selectedPermission, setSelectedPermission] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const loadPermissions = async () => {
     try {
@@ -26,8 +50,11 @@ export default function PermissionsPage() {
       setError("");
       const data = await getPermissions();
       setPermissions(data);
-    } catch {
-      setError("No se pudieron cargar los permisos");
+    } catch (currentError) {
+      setError(
+        currentError.response?.data?.message ||
+          "No se pudieron cargar los permisos"
+      );
     } finally {
       setLoading(false);
     }
@@ -58,9 +85,7 @@ export default function PermissionsPage() {
       setError("");
 
       if (selectedPermission) {
-        const permissionId =
-          selectedPermission.id || selectedPermission._id;
-        await updatePermission(permissionId, formData);
+        await updatePermission(getEntityId(selectedPermission), formData);
       } else {
         await createPermission(formData);
       }
@@ -68,47 +93,97 @@ export default function PermissionsPage() {
       setShowForm(false);
       setSelectedPermission(null);
       await loadPermissions();
-    } catch {
-      setError("No fue posible guardar el permiso");
+    } catch (currentError) {
+      setError(
+        currentError.response?.data?.message ||
+          "No fue posible guardar el permiso"
+      );
     } finally {
       setFormLoading(false);
     }
   };
 
   const handleDelete = async (permission) => {
-    const permissionId = permission.id || permission._id;
     const confirmed = window.confirm(
-      `¿Seguro que deseas eliminar el permiso ${permission.name}?`
+      `¿Seguro que deseas eliminar el permiso ${getPermissionName(permission)}?`
     );
 
-    if (!confirmed) return;
+    if (!confirmed) {
+      return;
+    }
 
     try {
       setError("");
-      await deletePermission(permissionId);
+      await deletePermission(getEntityId(permission));
       await loadPermissions();
-    } catch {
-      setError("No fue posible eliminar el permiso");
+    } catch (currentError) {
+      setError(
+        currentError.response?.data?.message ||
+          "No fue posible eliminar el permiso"
+      );
     }
   };
 
+  const filteredPermissions = permissions.filter((permission) =>
+    matchesPermissionSearch(permission, searchTerm)
+  );
+
+  const totalPermissions = permissions.length;
+  const moduleCount = new Set(permissions.map(getPermissionModule)).size;
+  const actionCount = new Set(permissions.map(getPermissionAction)).size;
+  const visibleCount = filteredPermissions.length;
+
   const columns = [
     {
-      key: "id",
-      title: "ID",
-      render: (permission) => permission.id || permission._id,
+      key: "permission",
+      title: "Permiso",
+      render: (permission) => (
+        <div className={styles.permissionCell}>
+          <div className={styles.permissionHeader}>
+            <strong className={styles.permissionName}>
+              {getPermissionName(permission)}
+            </strong>
+            <span className={styles.permissionId}>
+              ID {getEntityId(permission)}
+            </span>
+          </div>
+          <p className={styles.permissionDescription}>
+            {getPermissionDescription(permission)}
+          </p>
+        </div>
+      ),
     },
     {
-      key: "model",
-      title: "Modelo",
+      key: "scope",
+      title: "Alcance",
+      render: (permission) => (
+        <div className={styles.scopeCell}>
+          <span className={styles.scopeChip}>
+            {formatPermissionLabel(getPermissionModule(permission))}
+          </span>
+          <span className={`${styles.scopeChip} ${styles.scopeChipAccent}`}>
+            {formatPermissionLabel(getPermissionAction(permission))}
+          </span>
+        </div>
+      ),
     },
     {
-      key: "url",
-      title: "URL",
-    },
-    {
-      key: "method",
-      title: "Método",
+      key: "endpoint",
+      title: "Endpoint",
+      render: (permission) => {
+        const method = getPermissionMethod(permission);
+
+        return (
+          <div className={styles.endpointCell}>
+            <span className={`${styles.methodBadge} ${getMethodToneClass(method)}`}>
+              {method}
+            </span>
+            <code className={styles.endpointCode}>
+              {getPermissionUrl(permission)}
+            </code>
+          </div>
+        );
+      },
     },
     {
       key: "actions",
@@ -126,7 +201,7 @@ export default function PermissionsPage() {
     <div className={styles.page}>
       <PageHeader
         title="Permisos"
-        description="Gestiona los permisos del sistema."
+        description="Gestiona nombre, alcance, descripcion y endpoint de cada permiso del sistema."
         action={
           <Button variant="primary" onClick={handleOpenCreate}>
             Nuevo permiso
@@ -134,10 +209,33 @@ export default function PermissionsPage() {
         }
       />
 
-      {error && <p style={{ color: "crimson" }}>{error}</p>}
+      {error && <p className={styles.errorBanner}>{error}</p>}
+
+      <section className={styles.statsGrid}>
+        <article className={styles.statCard}>
+          <span className={styles.statLabel}>Permisos registrados</span>
+          <strong className={styles.statValue}>{totalPermissions}</strong>
+        </article>
+
+        <article className={styles.statCard}>
+          <span className={styles.statLabel}>Modulos cubiertos</span>
+          <strong className={styles.statValue}>{moduleCount}</strong>
+        </article>
+
+        <article className={styles.statCard}>
+          <span className={styles.statLabel}>Acciones distintas</span>
+          <strong className={styles.statValue}>{actionCount}</strong>
+        </article>
+
+        <article className={styles.statCard}>
+          <span className={styles.statLabel}>Resultados visibles</span>
+          <strong className={styles.statValue}>{visibleCount}</strong>
+        </article>
+      </section>
 
       {showForm && (
         <PermissionForm
+          key={selectedPermission ? getEntityId(selectedPermission) : "create"}
           initialData={selectedPermission}
           onSubmit={handleSubmit}
           onCancel={handleCancel}
@@ -145,15 +243,42 @@ export default function PermissionsPage() {
         />
       )}
 
-      {loading ? (
-        <p>Cargando permisos...</p>
-      ) : (
-        <Table
-          columns={columns}
-          data={permissions}
-          emptyMessage="No hay permisos registrados."
-        />
-      )}
+      <section className={styles.listSection}>
+        <div className={styles.toolbar}>
+          <div>
+            <h2 className={styles.toolbarTitle}>Catalogo de permisos</h2>
+            <p className={styles.toolbarText}>
+              Busca por nombre, modulo, accion, descripcion, metodo o URL.
+            </p>
+          </div>
+
+          <div className={styles.searchBox}>
+            <label className={styles.searchLabel} htmlFor="permission-search">
+              Buscar permiso
+            </label>
+            <input
+              id="permission-search"
+              className={styles.searchInput}
+              type="search"
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              placeholder="Ej. users_delete, /api/users/**, delete..."
+            />
+          </div>
+        </div>
+
+        {loading ? (
+          <p className={styles.statusText}>Cargando permisos...</p>
+        ) : (
+          <div className={styles.tableWrap}>
+            <Table
+              columns={columns}
+              data={filteredPermissions}
+              emptyMessage="No hay permisos que coincidan con la busqueda."
+            />
+          </div>
+        )}
+      </section>
     </div>
   );
 }
