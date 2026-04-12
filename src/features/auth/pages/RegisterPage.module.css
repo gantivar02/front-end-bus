@@ -1,0 +1,92 @@
+.strengthBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.strengthHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.strengthLabel {
+  color: #475569;
+  font-size: 0.88rem;
+}
+
+.strengthValue {
+  font-size: 0.88rem;
+}
+
+.strengthTrack {
+  width: 100%;
+  height: 9px;
+  border-radius: 999px;
+  background: #e5e7eb;
+  overflow: hidden;
+}
+
+.strengthBar {
+  height: 100%;
+  border-radius: inherit;
+  transition:
+    width 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.neutral {
+  color: #64748b;
+  background: #cbd5e1;
+}
+
+.weak {
+  color: #b91c1c;
+  background: #ef4444;
+}
+
+.medium {
+  color: #b45309;
+  background: #f59e0b;
+}
+
+.strong {
+  color: #166534;
+  background: #22c55e;
+}
+
+.requirementList {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: #64748b;
+  font-size: 0.86rem;
+}
+
+.requirementPassed {
+  color: #166534;
+}
+
+.requirementPending {
+  color: #64748b;
+}
+
+.successBox {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+}
+
+.successHint {
+  margin: 0;
+  color: #166534;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}

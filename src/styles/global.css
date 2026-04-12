@@ -54,6 +54,7 @@ input {
 
 .auth-form input[type="email"],
 .auth-form input[type="password"],
+.auth-form input[type="tel"],
 .auth-form input[type="text"] {
   padding: 10px 12px;
   border: 1px solid #d1d5db;

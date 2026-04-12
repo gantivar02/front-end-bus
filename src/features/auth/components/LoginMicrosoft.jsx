@@ -27,9 +27,16 @@ export default function LoginMicrosoft({ onSuccess }) {
         throw new Error("Microsoft no devolvio un access token valido.");
       }
 
-      const apiResponse = await api.post("/public/security/login-microsoft", {
-        token,
-      });
+      const apiResponse = await api.post(
+        "/public/security/login-microsoft",
+        {
+          token,
+        },
+        {
+          skipAuth: true,
+          skipAuthRedirect: true,
+        }
+      );
       const data = apiResponse.data;
 
       if (!data?.token) {

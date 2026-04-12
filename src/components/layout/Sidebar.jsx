@@ -15,6 +15,7 @@ export default function Sidebar() {
         <NavLink to="/user-role">Usuario - Roles</NavLink>
         <NavLink to="/profiles">Perfiles</NavLink>
         <NavLink to="/sessions">Sesiones</NavLink>
+        <NavLink to="/account">Cuenta</NavLink>
       </nav>
     </aside>
   );
