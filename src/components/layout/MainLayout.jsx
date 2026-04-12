@@ -1,15 +1,14 @@
 import { Outlet } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
-import styles from "./MainLayout.module.css";
 
 export default function MainLayout() {
   return (
-    <div className={styles.appShell}>
+    <div className="bg-surface text-on-surface min-h-screen">
       <Sidebar />
-      <div className={styles.contentArea}>
+      <div className="ml-64 min-h-screen flex flex-col">
         <Header />
-        <main className={styles.pageContent}>
+        <main className="pt-20 px-8 pb-12 flex-1">
           <Outlet />
         </main>
       </div>

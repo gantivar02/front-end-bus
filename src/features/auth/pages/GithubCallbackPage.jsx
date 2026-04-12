@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
 import api from "../../../services/api";
@@ -12,11 +12,14 @@ export default function GithubCallbackPage() {
   const [error, setError] = useState(() =>
     code ? "" : "No se recibió el código de autorización de GitHub."
   );
+  // Evita la doble ejecución de StrictMode en desarrollo (el code de GitHub es de un solo uso)
+  const calledRef = useRef(false);
 
   useEffect(() => {
-    if (!code) {
+    if (!code || calledRef.current) {
       return;
     }
+    calledRef.current = true;
 
     api
       .post(
