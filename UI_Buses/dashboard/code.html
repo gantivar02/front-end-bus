@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sentinel Admin Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-error": "#ffffff",
+                    "on-tertiary-fixed": "#360f00",
+                    "inverse-surface": "#2d3133",
+                    "on-tertiary-container": "#ffede6",
+                    "secondary-container": "#b5d0fd",
+                    "tertiary": "#943700",
+                    "on-secondary-container": "#3e5980",
+                    "on-surface": "#191c1e",
+                    "surface-variant": "#e0e3e5",
+                    "surface-container-highest": "#e0e3e5",
+                    "primary": "#004ac6",
+                    "background": "#f7f9fb",
+                    "secondary": "#455f87",
+                    "error": "#ba1a1a",
+                    "surface-container-lowest": "#ffffff",
+                    "on-secondary-fixed": "#001c3b",
+                    "on-primary": "#ffffff",
+                    "primary-fixed-dim": "#b4c5ff",
+                    "tertiary-fixed": "#ffdbcd",
+                    "tertiary-container": "#bc4800",
+                    "primary-container": "#2563eb",
+                    "surface-tint": "#0053db",
+                    "on-primary-fixed": "#00174b",
+                    "tertiary-fixed-dim": "#ffb596",
+                    "on-tertiary-fixed-variant": "#7d2d00",
+                    "surface": "#f7f9fb",
+                    "on-background": "#191c1e",
+                    "outline-variant": "#c3c6d7",
+                    "error-container": "#ffdad6",
+                    "on-secondary": "#ffffff",
+                    "surface-container-low": "#f2f4f6",
+                    "surface-bright": "#f7f9fb",
+                    "secondary-fixed-dim": "#adc8f5",
+                    "inverse-on-surface": "#eff1f3",
+                    "surface-dim": "#d8dadc",
+                    "on-tertiary": "#ffffff",
+                    "on-surface-variant": "#434655",
+                    "inverse-primary": "#b4c5ff",
+                    "on-secondary-fixed-variant": "#2d486d",
+                    "secondary-fixed": "#d5e3ff",
+                    "on-primary-container": "#eeefff",
+                    "outline": "#737686",
+                    "surface-container": "#eceef0",
+                    "on-error-container": "#93000a",
+                    "primary-fixed": "#dbe1ff",
+                    "on-primary-fixed-variant": "#003ea8",
+                    "surface-container-high": "#e6e8ea"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Manrope"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3, .font-headline { font-family: 'Manrope', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface">
+<!-- SideNavBar -->
+<aside class="h-screen w-64 fixed left-0 top-0 overflow-y-auto bg-slate-50 dark:bg-slate-900 flex flex-col py-6 px-4 z-50">
+<div class="mb-10 px-2">
+<h1 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Sentinel Admin</h1>
+<p class="text-xs text-slate-500 font-label uppercase tracking-widest mt-1">Bus Security Microservice</p>
+</div>
+<nav class="flex-grow space-y-1">
+<!-- Dashboard (Active) -->
+<a class="flex items-center gap-3 px-3 py-2 text-blue-600 dark:text-blue-400 font-semibold border-r-4 border-blue-600 transition-colors active:scale-[0.98] duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-body text-sm">Dashboard</span>
+</a>
+<!-- Usuarios -->
+<a class="flex items-center gap-3 px-3 py-2 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span class="font-body text-sm">Usuarios</span>
+</a>
+<!-- Roles -->
+<a class="flex items-center gap-3 px-3 py-2 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="security">security</span>
+<span class="font-body text-sm">Roles</span>
+</a>
+<!-- Permisos -->
+<a class="flex items-center gap-3 px-3 py-2 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="vpn_key">vpn_key</span>
+<span class="font-body text-sm">Permisos</span>
+</a>
+<!-- Rol-Permisos -->
+<a class="flex items-center gap-3 px-3 py-2 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="rule">rule</span>
+<span class="font-body text-sm">Rol-Permisos</span>
+</a>
+<!-- Usuario-Roles -->
+<a class="flex items-center gap-3 px-3 py-2 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="admin_panel_settings">admin_panel_settings</span>
+<span class="font-body text-sm">Usuario-Roles</span>
+</a>
+<!-- Perfiles -->
+<a class="flex items-center gap-3 px-3 py-2 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+<span class="font-body text-sm">Perfiles</span>
+</a>
+<!-- Sesiones -->
+<a class="flex items-center gap-3 px-3 py-2 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="history">history</span>
+<span class="font-body text-sm">Sesiones</span>
+</a>
+</nav>
+<div class="mt-auto space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-body text-sm">Cuenta</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-error hover:bg-error-container/20 transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+<span class="font-body text-sm">Logout</span>
+</a>
+</div>
+</aside>
+<!-- TopNavBar -->
+<header class="fixed top-0 right-0 w-[calc(100%-16rem)] h-16 flex justify-between items-center px-8 bg-transparent backdrop-blur-xl z-40">
+<div class="flex items-center gap-4">
+<nav class="flex items-center space-x-2 font-label text-[10px] uppercase tracking-wider text-slate-500">
+<span>Admin</span>
+<span class="material-symbols-outlined text-[12px]">chevron_right</span>
+<span class="text-blue-600 font-bold">Dashboard</span>
+</nav>
+</div>
+<div class="flex items-center gap-6">
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
+<input class="pl-10 pr-4 py-2 bg-surface-container-highest border-none rounded-full text-sm focus:ring-2 focus:ring-blue-500/50 w-64 transition-all" placeholder="Global search..." type="text"/>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-slate-500 hover:bg-black/5 p-2 rounded-full transition-colors relative">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full border-2 border-surface"></span>
+</button>
+<button class="text-slate-500 hover:bg-black/5 p-2 rounded-full transition-colors">
+<span class="material-symbols-outlined" data-icon="help_outline">help_outline</span>
+</button>
+<div class="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-on-primary font-bold text-xs">
+                    AD
+                </div>
+</div>
+</div>
+</header>
+<!-- Main Content -->
+<main class="ml-64 pt-20 px-8 pb-12 min-h-screen bg-surface">
+<!-- Welcome Section -->
+<section class="mb-10">
+<div class="bg-surface-container-lowest rounded-xl p-8 flex items-center justify-between overflow-hidden relative group">
+<div class="z-10 relative">
+<h2 class="text-3xl font-headline font-extrabold text-on-surface tracking-tight">Bienvenido, Alejandro</h2>
+<p class="text-secondary mt-2 max-w-md font-body leading-relaxed">Tu panel de control de Sentinel está actualizado. Se detectaron 2 nuevas sesiones sospechosas en el microservicio de transporte que requieren atención.</p>
+<div class="mt-6 flex gap-3">
+<button class="bg-gradient-to-r from-primary to-primary-container text-on-primary px-6 py-2.5 rounded-lg font-semibold text-sm shadow-lg shadow-primary/20 hover:scale-[1.02] transition-transform">Ver Reportes</button>
+<button class="text-primary font-semibold text-sm px-4 py-2.5 hover:bg-surface-container-high rounded-lg transition-colors">Configurar Alertas</button>
+</div>
+</div>
+<div class="absolute right-0 top-0 h-full w-1/3 bg-primary/5 -skew-x-12 translate-x-12"></div>
+<div class="hidden lg:block relative z-10">
+<div class="w-32 h-32 bg-secondary-fixed rounded-2xl flex items-center justify-center rotate-6 shadow-xl">
+<span class="material-symbols-outlined text-5xl text-primary" data-icon="verified_user" style="font-variation-settings: 'FILL' 1;">verified_user</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Stats Grid -->
+<section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+<!-- Total Usuarios -->
+<div class="bg-surface-container-lowest p-6 rounded-xl transition-all">
+<div class="flex justify-between items-start mb-4">
+<div class="p-3 bg-primary/10 text-primary rounded-lg">
+<span class="material-symbols-outlined">person</span>
+</div>
+<span class="text-xs font-label text-success font-bold flex items-center gap-1">
+                        +12% <span class="material-symbols-outlined text-[14px]">trending_up</span>
+</span>
+</div>
+<h3 class="text-slate-500 font-label text-[10px] uppercase tracking-widest font-bold">Total Usuarios</h3>
+<p class="text-2xl font-headline font-extrabold mt-1">1,284</p>
+<div class="mt-4 w-full bg-surface-container-low h-1.5 rounded-full overflow-hidden">
+<div class="bg-primary h-full w-[75%]"></div>
+</div>
+</div>
+<!-- Sesiones Activas -->
+<div class="bg-surface-container-lowest p-6 rounded-xl transition-all">
+<div class="flex justify-between items-start mb-4">
+<div class="p-3 bg-tertiary/10 text-tertiary rounded-lg">
+<span class="material-symbols-outlined">bolt</span>
+</div>
+<span class="text-xs font-label text-error font-bold flex items-center gap-1">
+                        -2% <span class="material-symbols-outlined text-[14px]">trending_down</span>
+</span>
+</div>
+<h3 class="text-slate-500 font-label text-[10px] uppercase tracking-widest font-bold">Sesiones Activas</h3>
+<p class="text-2xl font-headline font-extrabold mt-1">452</p>
+<div class="mt-4 w-full bg-surface-container-low h-1.5 rounded-full overflow-hidden">
+<div class="bg-tertiary h-full w-[40%]"></div>
+</div>
+</div>
+<!-- Cantidad de Roles -->
+<div class="bg-surface-container-lowest p-6 rounded-xl transition-all">
+<div class="flex justify-between items-start mb-4">
+<div class="p-3 bg-secondary/10 text-secondary rounded-lg">
+<span class="material-symbols-outlined">verified</span>
+</div>
+<span class="text-xs font-label text-slate-400 font-bold">Estable</span>
+</div>
+<h3 class="text-slate-500 font-label text-[10px] uppercase tracking-widest font-bold">Cantidad de Roles</h3>
+<p class="text-2xl font-headline font-extrabold mt-1">12</p>
+<div class="mt-4 w-full bg-surface-container-low h-1.5 rounded-full overflow-hidden">
+<div class="bg-secondary h-full w-[100%]"></div>
+</div>
+</div>
+<!-- Cantidad de Permisos -->
+<div class="bg-surface-container-lowest p-6 rounded-xl transition-all">
+<div class="flex justify-between items-start mb-4">
+<div class="p-3 bg-primary/10 text-primary rounded-lg">
+<span class="material-symbols-outlined">key</span>
+</div>
+<span class="text-xs font-label text-success font-bold flex items-center gap-1">
+                        +4 <span class="material-symbols-outlined text-[14px]">add</span>
+</span>
+</div>
+<h3 class="text-slate-500 font-label text-[10px] uppercase tracking-widest font-bold">Cantidad de Permisos</h3>
+<p class="text-2xl font-headline font-extrabold mt-1">128</p>
+<div class="mt-4 w-full bg-surface-container-low h-1.5 rounded-full overflow-hidden">
+<div class="bg-primary h-full w-[65%]"></div>
+</div>
+</div>
+</section>
+<!-- Bento Layout for Data Vis -->
+<div class="grid grid-cols-12 gap-6">
+<!-- Security Health Pods -->
+<div class="col-span-12 lg:col-span-4 flex flex-col gap-6">
+<div class="bg-surface-container-low p-6 rounded-[1.5rem] border border-outline-variant/15">
+<div class="flex items-center justify-between mb-4">
+<h4 class="font-headline font-bold text-sm">Health: Auth Microservice</h4>
+<span class="px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-[10px] font-bold uppercase">Optimal</span>
+</div>
+<div class="h-10 w-full flex items-end gap-1">
+<div class="bg-primary-container/20 w-full h-[60%] rounded-sm"></div>
+<div class="bg-primary-container/40 w-full h-[70%] rounded-sm"></div>
+<div class="bg-primary-container/60 w-full h-[65%] rounded-sm"></div>
+<div class="bg-primary w-full h-[90%] rounded-sm"></div>
+</div>
+</div>
+<div class="bg-surface-container-low p-6 rounded-[1.5rem] border border-outline-variant/15">
+<div class="flex items-center justify-between mb-4">
+<h4 class="font-headline font-bold text-sm">Health: User Manager</h4>
+<span class="px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-[10px] font-bold uppercase">Optimal</span>
+</div>
+<div class="h-10 w-full flex items-end gap-1">
+<div class="bg-primary w-full h-[85%] rounded-sm"></div>
+<div class="bg-primary-container/60 w-full h-[90%] rounded-sm"></div>
+<div class="bg-primary-container/40 w-full h-[80%] rounded-sm"></div>
+<div class="bg-primary-container/20 w-full h-[95%] rounded-sm"></div>
+</div>
+</div>
+<div class="bg-surface-container-low p-6 rounded-[1.5rem] border border-outline-variant/15">
+<div class="flex items-center justify-between mb-4">
+<h4 class="font-headline font-bold text-sm">Health: Permissions Engine</h4>
+<span class="px-2 py-0.5 rounded-full bg-orange-100 text-orange-700 text-[10px] font-bold uppercase">Latency</span>
+</div>
+<div class="h-10 w-full flex items-end gap-1">
+<div class="bg-tertiary-container/20 w-full h-[40%] rounded-sm"></div>
+<div class="bg-tertiary-container/40 w-full h-[30%] rounded-sm"></div>
+<div class="bg-tertiary-container/60 w-full h-[20%] rounded-sm"></div>
+<div class="bg-tertiary w-full h-[10%] rounded-sm"></div>
+</div>
+</div>
+</div>
+<!-- Recent Sessions Visual Table -->
+<div class="col-span-12 lg:col-span-8 bg-surface-container-lowest rounded-xl p-8 shadow-sm">
+<div class="flex items-center justify-between mb-8">
+<div>
+<h3 class="text-xl font-headline font-extrabold tracking-tight">Sesiones Recientes</h3>
+<p class="text-xs text-slate-400 font-label mt-1">MONITOREO EN TIEMPO REAL</p>
+</div>
+<button class="p-2 hover:bg-surface-container-low rounded-lg">
+<span class="material-symbols-outlined text-outline">more_horiz</span>
+</button>
+</div>
+<div class="space-y-4">
+<!-- Row 1 -->
+<div class="flex items-center justify-between p-4 bg-surface-container-low rounded-xl border border-transparent hover:border-outline-variant/20 transition-all">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-lg bg-white flex items-center justify-center">
+<span class="material-symbols-outlined text-primary">desktop_windows</span>
+</div>
+<div>
+<h5 class="text-sm font-semibold font-body">Admin Dashboard - Chrome</h5>
+<p class="text-xs text-slate-500">IP: 192.168.1.104 • Madrid, ES</p>
+</div>
+</div>
+<div class="flex items-center gap-8">
+<div class="text-right">
+<p class="text-xs font-bold font-label uppercase text-slate-400">Estado</p>
+<span class="flex items-center gap-1.5 text-xs text-green-600 font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-green-600"></span> Activa
+                                </span>
+</div>
+<button class="material-symbols-outlined text-slate-400 hover:text-error transition-colors">logout</button>
+</div>
+</div>
+<!-- Row 2 -->
+<div class="flex items-center justify-between p-4 bg-surface-container-lowest rounded-xl border border-outline-variant/15 hover:border-outline-variant/40 transition-all">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-lg bg-surface-container-low flex items-center justify-center">
+<span class="material-symbols-outlined text-slate-600">smartphone</span>
+</div>
+<div>
+<h5 class="text-sm font-semibold font-body">Sentinel Mobile App</h5>
+<p class="text-xs text-slate-500">IP: 10.0.0.12 • Barcelona, ES</p>
+</div>
+</div>
+<div class="flex items-center gap-8">
+<div class="text-right">
+<p class="text-xs font-bold font-label uppercase text-slate-400">Estado</p>
+<span class="flex items-center gap-1.5 text-xs text-slate-400 font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-slate-300"></span> Hace 2m
+                                </span>
+</div>
+<button class="material-symbols-outlined text-slate-400 hover:text-error transition-colors">logout</button>
+</div>
+</div>
+<!-- Row 3 -->
+<div class="flex items-center justify-between p-4 bg-surface-container-low rounded-xl border border-transparent hover:border-outline-variant/20 transition-all">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-lg bg-white flex items-center justify-center">
+<span class="material-symbols-outlined text-error">warning</span>
+</div>
+<div>
+<h5 class="text-sm font-semibold font-body">Unknown API Request</h5>
+<p class="text-xs text-slate-500">IP: 45.23.1.200 • Kiev, UA</p>
+</div>
+</div>
+<div class="flex items-center gap-8">
+<div class="text-right">
+<p class="text-xs font-bold font-label uppercase text-slate-400">Estado</p>
+<span class="flex items-center gap-1.5 text-xs text-error font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-error"></span> Sospechosa
+                                </span>
+</div>
+<button class="material-symbols-outlined text-slate-400 hover:text-error transition-colors">block</button>
+</div>
+</div>
+</div>
+<div class="mt-8 text-center">
+<button class="text-xs font-label uppercase tracking-widest text-primary font-extrabold hover:underline">Ver Historial Completo</button>
+</div>
+</div>
+</div>
+</main>
+<!-- FAB (Suppressed on Dashboard as per context mandate, but included if needed for global tasks) -->
+</body></html>

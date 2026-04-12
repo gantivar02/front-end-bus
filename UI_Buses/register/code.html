@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Register | Sentinel Security</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                "on-error": "#ffffff",
+                "on-tertiary-fixed": "#360f00",
+                "inverse-surface": "#2d3133",
+                "on-tertiary-container": "#ffede6",
+                "secondary-container": "#b5d0fd",
+                "tertiary": "#943700",
+                "on-secondary-container": "#3e5980",
+                "on-surface": "#191c1e",
+                "surface-variant": "#e0e3e5",
+                "surface-container-highest": "#e0e3e5",
+                "primary": "#004ac6",
+                "background": "#f7f9fb",
+                "secondary": "#455f87",
+                "error": "#ba1a1a",
+                "surface-container-lowest": "#ffffff",
+                "on-secondary-fixed": "#001c3b",
+                "on-primary": "#ffffff",
+                "primary-fixed-dim": "#b4c5ff",
+                "tertiary-fixed": "#ffdbcd",
+                "tertiary-container": "#bc4800",
+                "primary-container": "#2563eb",
+                "surface-tint": "#0053db",
+                "on-primary-fixed": "#00174b",
+                "tertiary-fixed-dim": "#ffb596",
+                "on-tertiary-fixed-variant": "#7d2d00",
+                "surface": "#f7f9fb",
+                "on-background": "#191c1e",
+                "outline-variant": "#c3c6d7",
+                "error-container": "#ffdad6",
+                "on-secondary": "#ffffff",
+                "surface-container-low": "#f2f4f6",
+                "surface-bright": "#f7f9fb",
+                "secondary-fixed-dim": "#adc8f5",
+                "inverse-on-surface": "#eff1f3",
+                "surface-dim": "#d8dadc",
+                "on-tertiary": "#ffffff",
+                "on-surface-variant": "#434655",
+                "inverse-primary": "#b4c5ff",
+                "on-secondary-fixed-variant": "#2d486d",
+                "secondary-fixed": "#d5e3ff",
+                "on-primary-container": "#eeefff",
+                "outline": "#737686",
+                "surface-container": "#eceef0",
+                "on-error-container": "#93000a",
+                "primary-fixed": "#dbe1ff",
+                "on-primary-fixed-variant": "#003ea8",
+                "surface-container-high": "#e6e8ea"
+            },
+            "borderRadius": {
+                "DEFAULT": "0.25rem",
+                "lg": "0.5rem",
+                "xl": "0.75rem",
+                "full": "9999px"
+            },
+            "fontFamily": {
+                "headline": ["Manrope"],
+                "body": ["Inter"],
+                "label": ["Inter"]
+            }
+          },
+        }
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3 { font-family: 'Manrope', sans-serif; }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+        }
+        .sentinel-shadow {
+            box-shadow: 0px 12px 32px -4px rgba(25, 28, 30, 0.06);
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface min-h-screen flex items-center justify-center p-6 relative overflow-hidden">
+<!-- Ambient Background Elements -->
+<div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-primary/5 blur-[120px]"></div>
+<div class="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-secondary/5 blur-[120px]"></div>
+<!-- Main Content Container -->
+<main class="w-full max-w-[1100px] grid grid-cols-1 lg:grid-cols-12 gap-0 overflow-hidden rounded-xl sentinel-shadow bg-surface-container-lowest">
+<!-- Branding/Hero Side (Left) -->
+<div class="hidden lg:flex lg:col-span-5 relative flex-col justify-between p-12 bg-surface-container-low border-r border-outline-variant/10">
+<div class="relative z-10">
+<div class="flex items-center gap-3 mb-12">
+<div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-on-primary" style="font-variation-settings: 'FILL' 1;">shield</span>
+</div>
+<span class="text-xl font-extrabold tracking-tight text-on-surface uppercase font-headline">Sentinel Security</span>
+</div>
+<h1 class="text-4xl font-extrabold text-on-surface leading-tight mb-6 font-headline">
+                    The Vigilant <br/>Monolith.
+                </h1>
+<p class="text-on-surface-variant text-lg leading-relaxed max-w-xs">
+                    Access high-definition precision in security and transport management.
+                </p>
+</div>
+<div class="relative z-10">
+<div class="flex items-center gap-4 p-4 rounded-xl bg-surface-container-lowest/50 backdrop-blur-md border border-outline-variant/20">
+<div class="w-12 h-12 rounded-full overflow-hidden bg-surface-container-high">
+<img class="w-full h-full object-cover" data-alt="professional portrait of a security systems administrator in a modern office environment" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC4oJX4W_GX-P_8b3Z5Mg4-OYdRhRhHPBO7CqHjNxvXqQA1S-RaD5302ElZnGVp_3bABTxOHYHasqoHM4_rGsOFAfjuxuZV_5705qV1e6ewkyht7FCbAXHb8rdG84IDcoLI6kJPRN3r9_Y-kTjE1Wks6zzFxl1FgCy_EGffSwQBRVT12Qdf7uSS8rExUbZ-B2N30BsKPDInfXat1BWaSAjfdei0YVtcRVAFV2aOJ0xo4TrwxcThkc_WcbEd-ckxk6Lz51unjgAp2r0"/>
+</div>
+<div>
+<p class="text-xs font-semibold uppercase tracking-wider text-primary font-label">System Admin</p>
+<p class="text-sm font-bold text-on-surface">Alex Thompson</p>
+</div>
+</div>
+</div>
+<!-- Decorative Mesh Overlay -->
+<div class="absolute inset-0 opacity-10 pointer-events-none" style="background-image: radial-gradient(#004ac6 0.5px, transparent 0.5px); background-size: 24px 24px;">
+</div>
+</div>
+<!-- Form Side (Right) -->
+<div class="lg:col-span-7 p-8 md:p-16 flex flex-col justify-center">
+<div class="max-w-md mx-auto w-full">
+<!-- Mobile Logo -->
+<div class="lg:hidden flex items-center gap-2 mb-8">
+<span class="material-symbols-outlined text-primary text-3xl">shield</span>
+<span class="text-lg font-bold tracking-tight uppercase">Sentinel Security</span>
+</div>
+<div class="mb-10">
+<h2 class="text-3xl font-bold text-on-surface mb-2 font-headline">Create your account</h2>
+<p class="text-on-surface-variant">Join the command center of secure microservices.</p>
+</div>
+<form class="space-y-6">
+<!-- Name Field -->
+<div class="space-y-1.5">
+<label class="block text-sm font-semibold text-on-surface-variant font-label uppercase tracking-wide" for="name">Full Name</label>
+<div class="relative">
+<div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-outline text-xl">person</span>
+</div>
+<input class="block w-full pl-11 pr-4 py-3.5 bg-surface-container-highest border-0 rounded-xl focus:ring-2 focus:ring-primary/50 text-on-surface placeholder-outline transition-all duration-200 shadow-sm" id="name" name="name" placeholder="John Doe" type="text"/>
+</div>
+</div>
+<!-- Email Field -->
+<div class="space-y-1.5">
+<label class="block text-sm font-semibold text-on-surface-variant font-label uppercase tracking-wide" for="email">Email Address</label>
+<div class="relative">
+<div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-outline text-xl">mail</span>
+</div>
+<input class="block w-full pl-11 pr-4 py-3.5 bg-surface-container-highest border-0 rounded-xl focus:ring-2 focus:ring-primary/50 text-on-surface placeholder-outline transition-all duration-200 shadow-sm" id="email" name="email" placeholder="admin@sentinel.io" type="email"/>
+</div>
+</div>
+<!-- Password Field -->
+<div class="space-y-1.5">
+<div class="flex justify-between items-center">
+<label class="block text-sm font-semibold text-on-surface-variant font-label uppercase tracking-wide" for="password">Password</label>
+<span class="text-xs font-medium text-outline">Min. 8 characters</span>
+</div>
+<div class="relative">
+<div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-outline text-xl">lock</span>
+</div>
+<input class="block w-full pl-11 pr-12 py-3.5 bg-surface-container-highest border-0 rounded-xl focus:ring-2 focus:ring-primary/50 text-on-surface placeholder-outline transition-all duration-200 shadow-sm" id="password" name="password" placeholder="••••••••" type="password"/>
+<button class="absolute inset-y-0 right-0 pr-4 flex items-center text-outline hover:text-primary transition-colors" type="button">
+<span class="material-symbols-outlined">visibility</span>
+</button>
+</div>
+</div>
+<!-- Checkbox -->
+<div class="flex items-start gap-3 py-2">
+<input class="mt-1 w-5 h-5 text-primary bg-surface-container-highest border-0 rounded-lg focus:ring-primary/50 focus:ring-offset-0" id="terms" type="checkbox"/>
+<label class="text-sm text-on-surface-variant leading-snug" for="terms">
+                            I agree to the <a class="text-primary font-semibold hover:underline" href="#">Terms of Service</a> and <a class="text-primary font-semibold hover:underline" href="#">Privacy Policy</a>.
+                        </label>
+</div>
+<!-- Submit Button -->
+<button class="w-full py-4 px-6 bg-gradient-to-r from-primary to-primary-container text-on-primary font-bold rounded-xl shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2" type="submit">
+<span>Initialize Account</span>
+<span class="material-symbols-outlined text-xl">arrow_forward</span>
+</button>
+</form>
+<div class="mt-8 pt-8 border-t border-outline-variant/20 text-center">
+<p class="text-on-surface-variant text-sm">
+                        Already have an account? 
+                        <a class="text-primary font-bold hover:underline ml-1" href="#">Log in to Sentinel</a>
+</p>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer Security Badge -->
+<div class="absolute bottom-8 left-0 right-0 flex justify-center pointer-events-none opacity-50">
+<div class="flex items-center gap-6 px-6 py-2 rounded-full bg-surface-container-low border border-outline-variant/20">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-sm text-primary" style="font-variation-settings: 'FILL' 1;">verified_user</span>
+<span class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant font-label">AES-256 Encrypted</span>
+</div>
+<div class="h-3 w-px bg-outline-variant/30"></div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-sm text-primary" style="font-variation-settings: 'FILL' 1;">hub</span>
+<span class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant font-label">Multi-Region Cloud</span>
+</div>
+</div>
+</div>
+</body></html>
