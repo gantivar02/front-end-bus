@@ -1,61 +1,81 @@
 import { useState } from "react";
 import Card from "../../../components/ui/Card";
 import Button from "../../../components/ui/Button";
+import {
+  getEntityId,
+  getPermissionMethod,
+  getPermissionUrl,
+  getPermissionModule,
+} from "../../permissions/utils/permissionUtils";
 import styles from "./AssignPermissionForm.module.css";
 
 export default function AssignPermissionForm({
-  roles,
+  selectedRole,
   permissions,
-  selectedRoleId,
-  onRoleChange,
+  assignedPermissionIds,
   onAssign,
   loading,
 }) {
   const [permissionId, setPermissionId] = useState("");
 
+  const availablePermissions = permissions.filter(
+    (p) => !assignedPermissionIds?.includes(getEntityId(p))
+  );
+
   const handleSubmit = (event) => {
     event.preventDefault();
-
-    if (!selectedRoleId || !permissionId) return;
-
+    if (!selectedRole || !permissionId) return;
     onAssign(permissionId);
     setPermissionId("");
   };
 
   return (
     <Card>
-      <h2>Asignar permiso a rol</h2>
+      <h2 className={styles.title}>Asignar permiso a rol</h2>
+
+      {selectedRole ? (
+        <div className={styles.roleBanner}>
+          <span>Rol seleccionado:</span>
+          <strong>{selectedRole.name}</strong>
+          {selectedRole.description && (
+            <span className={styles.roleDesc}>— {selectedRole.description}</span>
+          )}
+        </div>
+      ) : (
+        <p className={styles.hint}>
+          Selecciona un rol de la lista de abajo para poder asignarle permisos.
+        </p>
+      )}
 
       <form onSubmit={handleSubmit} className={styles.form}>
         <div className={styles.field}>
-          <label>Rol</label>
-          <select value={selectedRoleId} onChange={(e) => onRoleChange(e.target.value)}>
-            <option value="">Selecciona un rol</option>
-            {roles.map((role) => (
-              <option key={role.id || role._id} value={role.id || role._id}>
-                {role.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className={styles.field}>
-          <label>Permiso</label>
-          <select value={permissionId} onChange={(e) => setPermissionId(e.target.value)}>
-            <option value="">Selecciona un permiso</option>
-            {permissions.map((permission) => (
-              <option
-                key={permission.id || permission._id}
-                value={permission.id || permission._id}
-              >
-                {permission.method} {permission.url} — {permission.module}
+          <label>Permiso a asignar</label>
+          <select
+            value={permissionId}
+            onChange={(e) => setPermissionId(e.target.value)}
+            disabled={!selectedRole}
+          >
+            <option value="">
+              {!selectedRole
+                ? "Selecciona primero un rol"
+                : availablePermissions.length === 0
+                ? "Todos los permisos ya están asignados"
+                : "Selecciona un permiso"}
+            </option>
+            {availablePermissions.map((permission) => (
+              <option key={getEntityId(permission)} value={getEntityId(permission)}>
+                {getPermissionMethod(permission)} {getPermissionUrl(permission)} — {getPermissionModule(permission)}
               </option>
             ))}
           </select>
         </div>
 
         <div className={styles.actions}>
-          <Button type="submit" variant="primary" disabled={loading}>
+          <Button
+            type="submit"
+            variant="primary"
+            disabled={loading || !selectedRole || !permissionId}
+          >
             {loading ? "Asignando..." : "Asignar permiso"}
           </Button>
         </div>

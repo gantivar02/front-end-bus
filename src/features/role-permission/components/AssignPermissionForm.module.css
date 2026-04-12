@@ -147,6 +147,22 @@
   word-break: break-all;
 }
 
+.title {
+  margin: 0 0 4px;
+  color: #0f172a;
+}
+
+.hint {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.roleDesc {
+  color: #64748b;
+  font-size: 0.875rem;
+}
+
 .actions {
   display: flex;
   gap: 12px;
