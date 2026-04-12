@@ -2,24 +2,33 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
 import api from "../../../services/api";
+import { clearGoogleOnboardingData } from "../services/googleOnboardingStorage";
 
 // HU-006: GitHub redirige aquí con ?code=XXXX después de que el usuario autoriza
 export default function GithubCallbackPage() {
   const navigate = useNavigate();
   const { login } = useAuth();
-  const [error, setError] = useState("");
+  const code = new URLSearchParams(window.location.search).get("code");
+  const [error, setError] = useState(() =>
+    code ? "" : "No se recibió el código de autorización de GitHub."
+  );
 
   useEffect(() => {
-    const code = new URLSearchParams(window.location.search).get("code");
-
     if (!code) {
-      setError("No se recibió el código de autorización de GitHub.");
       return;
     }
 
     api
-      .post("/public/security/login-github", { code })
+      .post(
+        "/public/security/login-github",
+        { code },
+        {
+          skipAuth: true,
+          skipAuthRedirect: true,
+        }
+      )
       .then((res) => {
+        clearGoogleOnboardingData();
         login(res.data.token);
         navigate("/dashboard", { replace: true });
       })
@@ -33,7 +42,7 @@ export default function GithubCallbackPage() {
           setError("No fue posible autenticar con GitHub. Intenta de nuevo.");
         }
       });
-  }, []);
+  }, [code, login, navigate]);
 
   if (error) {
     return (

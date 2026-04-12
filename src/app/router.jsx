@@ -1,7 +1,9 @@
 import { Navigate, createBrowserRouter } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import PrivateRoute from "./PrivateRoute";
 import MainLayout from "../components/layout/MainLayout";
 import LoginPage from "../features/auth/pages/LoginPage";
+import RegisterPage from "../features/auth/pages/RegisterPage";
+import GoogleCompleteProfilePage from "../features/auth/pages/GoogleCompleteProfilePage";
 import GithubCallbackPage from "../features/auth/pages/GithubCallbackPage";
 import ForgotPasswordPage from "../features/auth/pages/ForgotPasswordPage";
 import ResetPasswordPage from "../features/auth/pages/ResetPasswordPage";
@@ -13,21 +15,18 @@ import RolePermissionsPage from "../features/role-permission/pages/RolePermissio
 import UserRolesPage from "../features/user-role/pages/UserRolesPage";
 import ProfilesPage from "../features/profiles/pages/ProfilesPage";
 import SessionsPage from "../features/sessions/pages/SessionsPage";
-
-// HU-009: usa AuthContext para proteger rutas autenticadas
-function PrivateRoute({ children }) {
-  const { isAuthenticated } = useAuth();
-  return isAuthenticated ? children : <Navigate to="/login" replace />;
-}
+import AccountSettingsPage from "../features/account/pages/AccountSettingsPage";
 
 export const router = createBrowserRouter([
-  // Rutas públicas
   { path: "/login", element: <LoginPage /> },
-  { path: "/auth/github/callback", element: <GithubCallbackPage /> },   // HU-006
-  { path: "/forgot-password", element: <ForgotPasswordPage /> },         // HU-013
-  { path: "/reset-password", element: <ResetPasswordPage /> },           // HU-013
-
-  // Rutas protegidas
+  { path: "/register", element: <RegisterPage /> },
+  {
+    path: "/auth/google/complete-profile",
+    element: <GoogleCompleteProfilePage />,
+  },
+  { path: "/auth/github/callback", element: <GithubCallbackPage /> },
+  { path: "/forgot-password", element: <ForgotPasswordPage /> },
+  { path: "/reset-password", element: <ResetPasswordPage /> },
   {
     path: "/",
     element: (
@@ -45,6 +44,7 @@ export const router = createBrowserRouter([
       { path: "user-role", element: <UserRolesPage /> },
       { path: "profiles", element: <ProfilesPage /> },
       { path: "sessions", element: <SessionsPage /> },
+      { path: "account", element: <AccountSettingsPage /> },
     ],
   },
 ]);

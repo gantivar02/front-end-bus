@@ -108,12 +108,19 @@ export default function ProfilesPage() {
       render: (profile) => profile.id || profile._id,
     },
     {
+      key: "address",
+      title: "Direccion",
+      render: (profile) => profile.address || "Sin direccion",
+    },
+    {
       key: "phone",
-      title: "Teléfono",
+      title: "Telefono",
+      render: (profile) => profile.phone || "Sin telefono",
     },
     {
       key: "photo",
       title: "Foto",
+      render: (profile) => profile.photo || "Sin foto",
     },
     {
       key: "user",
@@ -151,6 +158,7 @@ export default function ProfilesPage() {
 
       {showForm && (
         <ProfileForm
+          key={selectedProfile ? selectedProfile.id || selectedProfile._id : "create"}
           initialData={selectedProfile}
           users={users}
           onSubmit={handleSubmit}

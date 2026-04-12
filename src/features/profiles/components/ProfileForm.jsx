@@ -1,14 +1,17 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Card from "../../../components/ui/Card";
 import Input from "../../../components/ui/Input";
 import Button from "../../../components/ui/Button";
 import styles from "./ProfileForm.module.css";
 
-const initialForm = {
-  phone: "",
-  photo: "",
-  userId: "",
-};
+function createInitialForm(initialData) {
+  return {
+    address: initialData?.address || "",
+    phone: initialData?.phone || "",
+    photo: initialData?.photo || "",
+    userId: initialData?.user?.id || initialData?.user?._id || "",
+  };
+}
 
 export default function ProfileForm({
   initialData,
@@ -17,19 +20,7 @@ export default function ProfileForm({
   onCancel,
   loading,
 }) {
-  const [form, setForm] = useState(initialForm);
-
-  useEffect(() => {
-    if (initialData) {
-      setForm({
-        phone: initialData.phone || "",
-        photo: initialData.photo || "",
-        userId: initialData.user?.id || initialData.user?._id || "",
-      });
-    } else {
-      setForm(initialForm);
-    }
-  }, [initialData]);
+  const [form, setForm] = useState(() => createInitialForm(initialData));
 
   const handleChange = ({ target }) => {
     setForm((prev) => ({
@@ -42,8 +33,9 @@ export default function ProfileForm({
     event.preventDefault();
 
     const payload = {
-      phone: form.phone,
-      photo: form.photo,
+      address: form.address.trim(),
+      phone: form.phone.trim(),
+      photo: form.photo.trim(),
       user: {
         id: form.userId,
       },
@@ -58,12 +50,20 @@ export default function ProfileForm({
 
       <form onSubmit={handleSubmit} className={styles.form}>
         <Input
-          label="Teléfono"
+          label="Direccion"
+          name="address"
+          value={form.address}
+          onChange={handleChange}
+          placeholder="Direccion completa"
+          required
+        />
+
+        <Input
+          label="Telefono"
           name="phone"
           value={form.phone}
           onChange={handleChange}
           placeholder="3001234567"
-          required
         />
 
         <Input
@@ -72,7 +72,6 @@ export default function ProfileForm({
           value={form.photo}
           onChange={handleChange}
           placeholder="URL o nombre de la foto"
-          required
         />
 
         <div className={styles.field}>

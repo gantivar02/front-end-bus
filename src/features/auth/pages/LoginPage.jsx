@@ -1,25 +1,29 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import api from "../../../services/api";
 import { useAuth } from "../../../context/AuthContext";
 import LoginMicrosoft from "../components/LoginMicrosoft";
 import LoginGoogle from "../components/LoginGoogle";
 import LoginGithub from "../components/LoginGithub";
+import {
+  clearGoogleOnboardingData,
+  saveGoogleOnboardingData,
+} from "../services/googleOnboardingStorage";
+
+const publicAuthConfig = {
+  skipAuth: true,
+  skipAuthRedirect: true,
+};
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const { login } = useAuth();
 
-  // Paso actual: "credentials" | "2fa"
   const [step, setStep] = useState("credentials");
-
-  // Paso 1 — credenciales
   const [form, setForm] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
-  // Paso 2 — 2FA
-  const [twoFAData, setTwoFAData] = useState(null); // { sessionId, maskedEmail, expiration }
+  const [twoFAData, setTwoFAData] = useState(null);
   const [code, setCode] = useState("");
   const [codeLoading, setCodeLoading] = useState(false);
   const [timeLeft, setTimeLeft] = useState(0);
@@ -27,9 +31,10 @@ export default function LoginPage() {
   const [resendLoading, setResendLoading] = useState(false);
   const [resendMessage, setResendMessage] = useState("");
 
-  // HU-012: contador regresivo hasta la expiración del código
   useEffect(() => {
-    if (!twoFAData) return;
+    if (!twoFAData) {
+      return;
+    }
 
     const tick = () => {
       const remaining = Math.max(
@@ -47,14 +52,19 @@ export default function LoginPage() {
   const handleChange = ({ target }) =>
     setForm((prev) => ({ ...prev, [target.name]: target.value }));
 
-  // HU-012: el login ahora inicia el flujo 2FA
-  const handleCredentialsSubmit = async (e) => {
-    e.preventDefault();
+  const handleCredentialsSubmit = async (event) => {
+    event.preventDefault();
     setError("");
     setLoading(true);
+
     try {
-      const res = await api.post("/public/security/login", form);
-      setTwoFAData(res.data); // { sessionId, maskedEmail, expiration }
+      const response = await api.post(
+        "/public/security/login",
+        form,
+        publicAuthConfig
+      );
+
+      setTwoFAData(response.data);
       setAttempts(3);
       setCode("");
       setResendMessage("");
@@ -66,42 +76,54 @@ export default function LoginPage() {
     }
   };
 
-  // HU-012: solo acepta dígitos, máximo 6
-  const handleCodeChange = (e) => {
-    setCode(e.target.value.replace(/[^0-9]/g, "").slice(0, 6));
+  const handleCodeChange = (event) => {
+    setCode(event.target.value.replace(/[^0-9]/g, "").slice(0, 6));
   };
 
-  // HU-012: verifica el código 2FA
-  const handleVerify2FA = async (e) => {
-    e.preventDefault();
-    if (code.length !== 6) return;
+  const handleVerify2FA = async (event) => {
+    event.preventDefault();
+
+    if (code.length !== 6) {
+      return;
+    }
+
     setError("");
     setCodeLoading(true);
+
     try {
-      const res = await api.post("/public/security/verify-2fa", {
-        sessionId: twoFAData.sessionId,
-        code,
-      });
-      login(res.data.token);
+      const response = await api.post(
+        "/public/security/verify-2fa",
+        {
+          sessionId: twoFAData.sessionId,
+          code,
+        },
+        publicAuthConfig
+      );
+
+      clearGoogleOnboardingData();
+      login(response.data.token);
       navigate("/dashboard");
-    } catch (err) {
-      const status = err.response?.status;
-      const msg = err.response?.data?.message || "";
-      const remaining = err.response?.data?.remainingAttempts;
+    } catch (currentError) {
+      const status = currentError.response?.status;
+      const message = currentError.response?.data?.message || "";
+      const remainingAttempts = currentError.response?.data?.remainingAttempts;
 
       if (status === 403) {
-        // Sesión bloqueada — volver al inicio
-        setError("Sesión bloqueada por demasiados intentos. Vuelve a iniciar sesión.");
+        setError(
+          "Sesion bloqueada por demasiados intentos. Vuelve a iniciar sesion."
+        );
         setStep("credentials");
         setTwoFAData(null);
       } else if (status === 410) {
-        // Código expirado
-        setError("El código ha expirado. Vuelve a iniciar sesión.");
+        setError("El codigo ha expirado. Vuelve a iniciar sesion.");
         setStep("credentials");
         setTwoFAData(null);
       } else {
-        if (remaining !== undefined) setAttempts(remaining);
-        setError(msg || "Código incorrecto");
+        if (remainingAttempts !== undefined) {
+          setAttempts(remainingAttempts);
+        }
+
+        setError(message || "Codigo incorrecto");
         setCode("");
       }
     } finally {
@@ -109,38 +131,65 @@ export default function LoginPage() {
     }
   };
 
-  // HU-012: reenviar código
   const handleResend = async () => {
     setResendLoading(true);
     setResendMessage("");
     setError("");
+
     try {
-      const res = await api.post("/public/security/resend-2fa", {
-        sessionId: twoFAData.sessionId,
-      });
-      setTwoFAData((prev) => ({ ...prev, expiration: res.data.expiration }));
+      const response = await api.post(
+        "/public/security/resend-2fa",
+        {
+          sessionId: twoFAData.sessionId,
+        },
+        publicAuthConfig
+      );
+
+      setTwoFAData((prev) => ({
+        ...prev,
+        expiration: response.data.expiration,
+      }));
       setCode("");
       setAttempts(3);
-      setResendMessage("Nuevo código enviado. Revisa tu email.");
+      setResendMessage("Nuevo codigo enviado. Revisa tu email.");
     } catch {
-      setError("No fue posible reenviar el código. Intenta iniciar sesión nuevamente.");
+      setError(
+        "No fue posible reenviar el codigo. Intenta iniciar sesion nuevamente."
+      );
     } finally {
       setResendLoading(false);
     }
   };
 
-  const formatTime = (seconds) => {
-    const m = Math.floor(seconds / 60).toString().padStart(2, "0");
-    const s = (seconds % 60).toString().padStart(2, "0");
-    return `${m}:${s}`;
+  const handleGoogleSuccess = (token) => {
+    clearGoogleOnboardingData();
+    login(token);
+    navigate("/dashboard");
   };
 
-  // ── Paso 1: Credenciales ──────────────────────────────────────────────────
+  const handleGoogleRequiresProfileCompletion = (data) => {
+    saveGoogleOnboardingData({
+      onboardingToken: data.onboardingToken,
+      userId: data.userId,
+      email: data.email,
+      name: data.name,
+      provider: data.provider,
+    });
+
+    navigate("/auth/google/complete-profile");
+  };
+
+  const formatTime = (seconds) => {
+    const minutes = Math.floor(seconds / 60).toString().padStart(2, "0");
+    const remainingSeconds = (seconds % 60).toString().padStart(2, "0");
+    return `${minutes}:${remainingSeconds}`;
+  };
+
   if (step === "credentials") {
     return (
       <div className="auth-page">
         <form className="auth-form" onSubmit={handleCredentialsSubmit}>
-          <h1>Iniciar sesión</h1>
+          <h1>Iniciar sesion</h1>
 
           <label>Email</label>
           <input
@@ -165,7 +214,11 @@ export default function LoginPage() {
           {error && <p className="error-text">{error}</p>}
 
           <Link to="/forgot-password" className="auth-link">
-            ¿Olvidó su contraseña?
+            ¿Olvido su contraseña?
+          </Link>
+
+          <Link to="/register" className="auth-link">
+            ¿No tienes cuenta? Registrate aqui
           </Link>
 
           <button type="submit" disabled={loading}>
@@ -175,41 +228,41 @@ export default function LoginPage() {
           <hr />
 
           <LoginGoogle
-            onSuccess={(token) => {
-              login(token);
-              navigate("/dashboard");
-            }}
+            onSuccess={handleGoogleSuccess}
+            onRequiresProfileCompletion={handleGoogleRequiresProfileCompletion}
           />
+
           <LoginMicrosoft
             onSuccess={(token) => {
+              clearGoogleOnboardingData();
               login(token);
               navigate("/dashboard");
             }}
           />
+
           <LoginGithub />
         </form>
       </div>
     );
   }
 
-  // ── Paso 2: Verificación 2FA ─────────────────────────────────────────────
   return (
     <div className="auth-page">
       <form className="auth-form" onSubmit={handleVerify2FA}>
-        <h1>Verificación en dos pasos</h1>
+        <h1>Verificacion en dos pasos</h1>
 
         <p className="auth-hint">
-          Ingrese el código de 6 dígitos enviado a{" "}
+          Ingrese el codigo de 6 digitos enviado a{" "}
           <strong>{twoFAData?.maskedEmail}</strong>
         </p>
 
         {timeLeft > 0 ? (
           <p className="auth-timer">Expira en: {formatTime(timeLeft)}</p>
         ) : (
-          <p className="error-text">El código ha expirado</p>
+          <p className="error-text">El codigo ha expirado</p>
         )}
 
-        <label>Código de verificación</label>
+        <label>Codigo de verificacion</label>
         <input
           type="text"
           inputMode="numeric"
@@ -238,7 +291,9 @@ export default function LoginPage() {
           onClick={handleResend}
           disabled={resendLoading}
         >
-          {resendLoading ? "Enviando..." : "¿No recibió el código? Revisar spam o reenviar"}
+          {resendLoading
+            ? "Enviando..."
+            : "¿No recibio el codigo? Revisar spam o reenviar"}
         </button>
 
         {resendMessage && <p className="auth-success">{resendMessage}</p>}
@@ -253,7 +308,7 @@ export default function LoginPage() {
             setCode("");
           }}
         >
-          ← Volver al inicio de sesión
+          ← Volver al inicio de sesion
         </button>
       </form>
     </div>
