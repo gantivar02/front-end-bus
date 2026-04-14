@@ -1,7 +1,7 @@
 import axios from "axios";
 import { storage } from "../utils/storage";
 
-export const API_BASE_URL = "http://localhost:8080/api";
+export const API_BASE_URL = "http://localhost:8081/api";
 
 const api = axios.create({
   baseURL: API_BASE_URL,

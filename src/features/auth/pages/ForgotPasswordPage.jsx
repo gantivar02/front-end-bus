@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import api from "../../../services/api";
 import useReCaptcha from "../../../components/ui/ReCaptcha";
 
+const publicAuthConfig = { skipAuth: true, skipAuthRedirect: true };
+
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
@@ -18,18 +20,24 @@ export default function ForgotPasswordPage() {
 
     try {
       const recaptchaToken = await getToken("forgot_password");
-      if (!recaptchaToken) {
-        setError("No se pudo verificar el reCAPTCHA. Intenta de nuevo.");
-        return;
-      }
       const res = await api.post(
         "/public/security/forgot-password",
         { email, recaptchaToken },
-        { skipAuth: true }
+        publicAuthConfig
       );
       setMessage(res.data.message);
-    } catch {
-      setError("No fue posible procesar la solicitud. Intenta de nuevo.");
+    } catch (err) {
+      const status = err.response?.status;
+      const backendMessage = err.response?.data?.message;
+      const recaptchaMessage = err.message;
+
+      if (status === 400) {
+        setError(backendMessage || "No fue posible validar reCAPTCHA. Intenta nuevamente.");
+      } else if (!status) {
+        setError(recaptchaMessage || "No fue posible validar reCAPTCHA. Intenta nuevamente.");
+      } else {
+        setError("No fue posible procesar la solicitud. Intenta de nuevo.");
+      }
     } finally {
       setLoading(false);
     }
