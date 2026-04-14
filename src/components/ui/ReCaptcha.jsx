@@ -1,13 +1,8 @@
-import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
 import { useCallback } from "react";
+import { executeRecaptcha } from "../../services/recaptcha";
 
 export default function useReCaptcha() {
-  const { executeRecaptcha } = useGoogleReCaptcha();
-
-  const getToken = useCallback(async (action = "submit") => {
-    if (!executeRecaptcha) return null;
-    return await executeRecaptcha(action);
-  }, [executeRecaptcha]);
+  const getToken = useCallback((action = "submit") => executeRecaptcha(action), []);
 
   return { getToken };
 }

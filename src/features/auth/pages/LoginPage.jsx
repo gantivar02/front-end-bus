@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import api, { API_BASE_URL } from "../../../services/api";
 import { useAuth } from "../../../context/AuthContext";
+import useReCaptcha from "../../../components/ui/ReCaptcha";
 import LoginMicrosoft from "../components/LoginMicrosoft";
 import LoginGoogle from "../components/LoginGoogle";
 import LoginGithub from "../components/LoginGithub";
@@ -15,6 +16,7 @@ const publicAuthConfig = { skipAuth: true, skipAuthRedirect: true };
 export default function LoginPage() {
   const navigate = useNavigate();
   const { login } = useAuth();
+  const { getToken } = useReCaptcha();
 
   const [step, setStep] = useState("credentials");
   const [form, setForm] = useState({ email: "", password: "" });
@@ -70,14 +72,32 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
     try {
-      const response = await api.post("/public/security/login", form, publicAuthConfig);
+      const recaptchaToken = await getToken("login");
+
+      const response = await api.post(
+        "/public/security/login",
+        { ...form, recaptchaToken },
+        publicAuthConfig
+      );
       setTwoFAData(response.data);
       setAttempts(3);
       setCode("");
       setResendMessage("");
       setStep("2fa");
-    } catch {
-      setError("Credenciales incorrectas");
+    } catch (err) {
+      const status = err.response?.status;
+      const backendMessage = err.response?.data?.message;
+      const recaptchaMessage = err.message;
+
+      if (status === 400) {
+        setError(backendMessage || "No fue posible validar reCAPTCHA. Intenta nuevamente.");
+      } else if (status === 401) {
+        setError("Credenciales incorrectas");
+      } else if (!status) {
+        setError(recaptchaMessage || "No fue posible validar reCAPTCHA. Intenta nuevamente.");
+      } else {
+        setError("No fue posible iniciar sesión. Intenta de nuevo.");
+      }
     } finally {
       setLoading(false);
     }
