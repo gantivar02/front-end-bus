@@ -49,8 +49,18 @@ export default function RolesPage() {
 
   const handleDelete = async (role) => {
     if (!window.confirm(`¿Eliminar rol ${role.name}?`)) return;
-    await deleteRole(role.id);
-    loadRoles();
+    try {
+      setError("");
+      await deleteRole(role.id);
+      await loadRoles();
+    } catch (err) {
+      const status = err.response?.status;
+      if (status === 409) {
+        setError(`No se puede eliminar el rol "${role.name}" porque está asignado a uno o más usuarios.`);
+      } else {
+        setError(err.response?.data?.message || "No fue posible eliminar el rol.");
+      }
+    }
   };
 
   const handleEdit = (role) => {

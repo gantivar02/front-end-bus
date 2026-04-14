@@ -1,7 +1,9 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { unlinkGoogle } from "../../auth/services/googleAuthService";
 import { unlinkGithub } from "../../auth/services/githubAuthService";
 import { useAuth } from "../../../context/AuthContext";
+import api from "../../../services/api";
 
 function decodeJwtPayload(token) {
   try {
@@ -28,9 +30,11 @@ const GithubLogo = () => (
 );
 
 export default function AccountSettingsPage() {
-  const { token } = useAuth();
+  const { token, logout } = useAuth();
+  const navigate = useNavigate();
   const claims = token ? decodeJwtPayload(token) : null;
   const githubUsername = claims?.githubUsername ?? null;
+  const userId = claims?._id;
 
   const [googleLoading, setGoogleLoading] = useState(false);
   const [googleMessage, setGoogleMessage] = useState("");
@@ -75,6 +79,24 @@ export default function AccountSettingsPage() {
       else setGithubError(backendMessage || "No fue posible desvincular la cuenta de GitHub.");
     } finally {
       setGithubLoading(false);
+    }
+  };
+
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
+
+  const handleDeleteAccount = async () => {
+    if (!window.confirm("¿Seguro que deseas eliminar tu cuenta? Esta acción es irreversible.")) return;
+    try {
+      setDeleteLoading(true);
+      setDeleteError("");
+      await api.delete(`/users/${userId}`);
+      logout();
+      navigate("/login", { replace: true });
+    } catch (err) {
+      setDeleteError(err.response?.data?.message || "No fue posible eliminar la cuenta. Intenta de nuevo.");
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -202,9 +224,14 @@ export default function AccountSettingsPage() {
             <p className="text-sm text-on-surface-variant mt-1">
               Una vez eliminada la cuenta, no hay marcha atrás. Todos los permisos y roles serán revocados.
             </p>
+            {deleteError && <p className="text-sm text-error mt-2">{deleteError}</p>}
           </div>
-          <button className="ml-6 flex-shrink-0 px-6 py-2.5 rounded-lg border-2 border-error text-error text-sm font-bold hover:bg-error hover:text-on-error transition-all active:scale-95">
-            Eliminar cuenta
+          <button
+            onClick={handleDeleteAccount}
+            disabled={deleteLoading}
+            className="ml-6 flex-shrink-0 px-6 py-2.5 rounded-lg border-2 border-error text-error text-sm font-bold hover:bg-error hover:text-on-error transition-all active:scale-95 disabled:opacity-60"
+          >
+            {deleteLoading ? "Eliminando..." : "Eliminar cuenta"}
           </button>
         </div>
       </div>
