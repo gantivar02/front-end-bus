@@ -222,7 +222,7 @@ export default function RecargarTarjetaPage() {
   const canConfirm = montoValido && aceptaTerminos && !iniciando;
 
   return (
-    <div className="max-w-5xl">
+    <div className="max-w-5xl mx-auto">
       <NegPageHeader
         eyebrow="HU 2-013"
         title="Recargar tarjeta"

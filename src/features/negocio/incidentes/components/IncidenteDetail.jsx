@@ -189,6 +189,29 @@ export default function IncidenteDetail({ incidente, onChangeEstado }) {
       </NegCard>
 
       <NegCard>
+        <NegSectionHeader title="Nuevo comentario" />
+        <NegTextarea
+          name="comentario"
+          value={comentario}
+          onChange={(e) => setComentario(e.target.value)}
+          placeholder="Agregá información o próximos pasos..."
+          rows={3}
+        />
+        {error && (
+          <p className="text-xs text-neg-error mt-2">{error}</p>
+        )}
+        <div className="flex items-center justify-end mt-3">
+          <NegButton
+            icon={posting ? "hourglass_top" : "send"}
+            disabled={!comentario.trim() || posting}
+            onClick={handlePublicar}
+          >
+            {posting ? "Publicando..." : "Publicar"}
+          </NegButton>
+        </div>
+      </NegCard>
+
+      <NegCard>
         <NegSectionHeader
           title="Comentarios"
           hint={
@@ -221,29 +244,6 @@ export default function IncidenteDetail({ incidente, onChangeEstado }) {
             ))}
           </ul>
         )}
-      </NegCard>
-
-      <NegCard>
-        <NegSectionHeader title="Nuevo comentario" />
-        <NegTextarea
-          name="comentario"
-          value={comentario}
-          onChange={(e) => setComentario(e.target.value)}
-          placeholder="Agregá información o próximos pasos..."
-          rows={3}
-        />
-        {error && (
-          <p className="text-xs text-neg-error mt-2">{error}</p>
-        )}
-        <div className="flex items-center justify-end mt-3">
-          <NegButton
-            icon={posting ? "hourglass_top" : "send"}
-            disabled={!comentario.trim() || posting}
-            onClick={handlePublicar}
-          >
-            {posting ? "Publicando..." : "Publicar"}
-          </NegButton>
-        </div>
       </NegCard>
     </div>
   );
