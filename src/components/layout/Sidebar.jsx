@@ -2,19 +2,19 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
 const navItems = [
-  { to: "/dashboard",      icon: "dashboard",           label: "Dashboard" },
-  { to: "/users",          icon: "group",               label: "Usuarios" },
-  { to: "/roles",          icon: "security",            label: "Roles" },
-  { to: "/permissions",    icon: "vpn_key",             label: "Permisos" },
-  { to: "/role-permission",icon: "rule",                label: "Rol-Permisos" },
-  { to: "/user-role",      icon: "admin_panel_settings",label: "Usuario-Roles" },
-  { to: "/profiles",       icon: "account_circle",      label: "Perfiles" },
-  { to: "/sessions",       icon: "history",             label: "Sesiones" },
-  { to: "/account",        icon: "settings",            label: "Cuenta" },
+  { to: "/seguridad/dashboard",       icon: "dashboard",           label: "Dashboard" },
+  { to: "/seguridad/users",           icon: "group",               label: "Usuarios" },
+  { to: "/seguridad/roles",           icon: "security",            label: "Roles" },
+  { to: "/seguridad/permissions",     icon: "vpn_key",             label: "Permisos" },
+  { to: "/seguridad/role-permission", icon: "rule",                label: "Rol-Permisos" },
+  { to: "/seguridad/user-role",       icon: "admin_panel_settings",label: "Usuario-Roles" },
+  { to: "/seguridad/profiles",        icon: "account_circle",      label: "Perfiles" },
+  { to: "/seguridad/sessions",        icon: "history",             label: "Sesiones" },
+  { to: "/seguridad/account",         icon: "settings",            label: "Cuenta" },
 ];
 
 export default function Sidebar() {
-  const { logout } = useAuth();
+  const { logout, isAdmin } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -61,8 +61,17 @@ export default function Sidebar() {
         ))}
       </nav>
 
-      {/* Logout */}
-      <div className="mt-auto pt-6 border-t border-slate-200/50">
+      {/* Footer actions */}
+      <div className="mt-auto pt-6 border-t border-slate-200/50 space-y-1">
+        {isAdmin && (
+          <button
+            onClick={() => navigate("/app-selection")}
+            className="flex items-center gap-3 px-3 py-2.5 w-full rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-200/50 transition-colors"
+          >
+            <span className="material-symbols-outlined text-[20px]">apps</span>
+            <span className="text-sm font-medium">Volver al selector</span>
+          </button>
+        )}
         <button
           onClick={handleLogout}
           className="flex items-center gap-3 px-3 py-2.5 w-full rounded-lg text-slate-500 hover:text-error hover:bg-red-50 transition-colors"

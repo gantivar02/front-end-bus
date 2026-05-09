@@ -1,26 +1,27 @@
 import { useLocation } from "react-router-dom";
 
 const breadcrumbLabels = {
-  "/dashboard":       "Dashboard",
-  "/users":           "Usuarios",
-  "/roles":           "Roles",
-  "/permissions":     "Permisos",
-  "/role-permission": "Rol-Permisos",
-  "/user-role":       "Usuario-Roles",
-  "/profiles":        "Perfiles",
-  "/sessions":        "Sesiones",
-  "/account":         "Cuenta",
+  "/seguridad":                 "Dashboard",
+  "/seguridad/dashboard":       "Dashboard",
+  "/seguridad/users":           "Usuarios",
+  "/seguridad/roles":           "Roles",
+  "/seguridad/permissions":     "Permisos",
+  "/seguridad/role-permission": "Rol-Permisos",
+  "/seguridad/user-role":       "Usuario-Roles",
+  "/seguridad/profiles":        "Perfiles",
+  "/seguridad/sessions":        "Sesiones",
+  "/seguridad/account":         "Cuenta",
 };
 
 export default function Header() {
   const { pathname } = useLocation();
-  const label = breadcrumbLabels[pathname] ?? "Admin";
+  const label = breadcrumbLabels[pathname] ?? "Seguridad";
 
   return (
     <header className="fixed top-0 right-0 w-[calc(100%-16rem)] h-16 flex justify-between items-center px-8 bg-transparent backdrop-blur-xl z-40">
       {/* Breadcrumb */}
       <nav className="flex items-center space-x-2 font-label text-[10px] uppercase tracking-wider text-slate-500">
-        <span>Admin</span>
+        <span>Seguridad</span>
         <span className="material-symbols-outlined text-[12px]">chevron_right</span>
         <span className="text-blue-600 font-bold">{label}</span>
       </nav>

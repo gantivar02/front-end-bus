@@ -1,12 +1,23 @@
-import { Navigate, createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter } from "react-router-dom";
 import PrivateRoute from "./PrivateRoute";
+import AdminRoute from "./AdminRoute";
+import RootRedirect from "./RootRedirect";
 import MainLayout from "../components/layout/MainLayout";
+import NegocioLayout from "../components/layout/negocio/NegocioLayout";
 import LoginPage from "../features/auth/pages/LoginPage";
 import RegisterPage from "../features/auth/pages/RegisterPage";
 import GoogleCompleteProfilePage from "../features/auth/pages/GoogleCompleteProfilePage";
 import GithubCallbackPage from "../features/auth/pages/GithubCallbackPage";
 import ForgotPasswordPage from "../features/auth/pages/ForgotPasswordPage";
 import ResetPasswordPage from "../features/auth/pages/ResetPasswordPage";
+import AppSelectionPage from "../features/app-selection/pages/AppSelectionPage";
+import NegocioHomePage from "../features/negocio/pages/NegocioHomePage";
+import ReporteRapidoPage from "../features/negocio/incidentes/pages/ReporteRapidoPage";
+import IncidentesPorBusPage from "../features/negocio/incidentes/pages/IncidentesPorBusPage";
+import RecargarTarjetaPage from "../features/negocio/recargas/pages/RecargarTarjetaPage";
+import IngresosPorMetodoPagoPage from "../features/negocio/reportes/pages/IngresosPorMetodoPagoPage";
+import DistribucionEtariaPage from "../features/negocio/reportes/pages/DistribucionEtariaPage";
+import TendenciaIncidentesPage from "../features/negocio/reportes/pages/TendenciaIncidentesPage";
 import DashboardPage from "../features/dashboard/pages/DashboardPage";
 import UsersPage from "../features/users/pages/UsersPage";
 import RolesPage from "../features/roles/pages/RolesPage";
@@ -27,15 +38,54 @@ export const router = createBrowserRouter([
   { path: "/auth/github/callback", element: <GithubCallbackPage /> },
   { path: "/forgot-password", element: <ForgotPasswordPage /> },
   { path: "/reset-password", element: <ResetPasswordPage /> },
+
+  { path: "/", element: <RootRedirect /> },
+
   {
-    path: "/",
+    path: "/app-selection",
+    element: (
+      <AdminRoute>
+        <AppSelectionPage />
+      </AdminRoute>
+    ),
+  },
+
+  {
+    path: "/negocio",
     element: (
       <PrivateRoute>
-        <MainLayout />
+        <NegocioLayout />
       </PrivateRoute>
     ),
     children: [
-      { index: true, element: <Navigate to="/dashboard" replace /> },
+      { index: true, element: <NegocioHomePage /> },
+      {
+        path: "incidentes/reportar",
+        element: <ReporteRapidoPage />,
+      },
+      { path: "incidentes/bus", element: <IncidentesPorBusPage /> },
+      { path: "recargas/nueva", element: <RecargarTarjetaPage /> },
+      { path: "reportes/ingresos", element: <IngresosPorMetodoPagoPage /> },
+      {
+        path: "reportes/distribucion-etaria",
+        element: <DistribucionEtariaPage />,
+      },
+      {
+        path: "reportes/tendencia-incidentes",
+        element: <TendenciaIncidentesPage />,
+      },
+    ],
+  },
+
+  {
+    path: "/seguridad",
+    element: (
+      <AdminRoute>
+        <MainLayout />
+      </AdminRoute>
+    ),
+    children: [
+      { index: true, element: <DashboardPage /> },
       { path: "dashboard", element: <DashboardPage /> },
       { path: "users", element: <UsersPage /> },
       { path: "roles", element: <RolesPage /> },
