@@ -33,7 +33,7 @@ export default function GithubCallbackPage() {
       .then((res) => {
         clearGoogleOnboardingData();
         login(res.data.token);
-        navigate("/dashboard", { replace: true });
+        navigate("/", { replace: true });
       })
       .catch((err) => {
         const errorCode = err.response?.data?.error;

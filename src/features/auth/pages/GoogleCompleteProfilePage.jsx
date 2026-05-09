@@ -84,7 +84,7 @@ export default function GoogleCompleteProfilePage() {
 
       clearGoogleOnboardingData();
       login(response.token);
-      navigate("/dashboard", { replace: true });
+      navigate("/", { replace: true });
     } catch (currentError) {
       const status = currentError.response?.status;
       const message = currentError.response?.data?.message;

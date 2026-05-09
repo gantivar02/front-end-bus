@@ -120,7 +120,7 @@ export default function LoginPage() {
       );
       clearGoogleOnboardingData();
       login(response.data.token);
-      navigate("/dashboard");
+      navigate("/");
     } catch (err) {
       const status = err.response?.status;
       const message = err.response?.data?.message || "";
@@ -167,7 +167,7 @@ export default function LoginPage() {
   const handleGoogleSuccess = (token) => {
     clearGoogleOnboardingData();
     login(token);
-    navigate("/dashboard");
+    navigate("/");
   };
 
   const handleGoogleRequiresProfileCompletion = (data) => {
@@ -299,7 +299,7 @@ export default function LoginPage() {
                 onSuccess={(token) => {
                   clearGoogleOnboardingData();
                   login(token);
-                  navigate("/dashboard");
+                  navigate("/");
                 }}
               />
             </div>
