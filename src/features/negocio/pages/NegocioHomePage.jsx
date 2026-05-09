@@ -39,7 +39,7 @@ export default function NegocioHomePage() {
   const nombre = user?.name ?? "Usuario";
 
   return (
-    <div className="max-w-6xl">
+    <div className="max-w-6xl mx-auto">
       <NegPageHeader
         eyebrow="Panel de operaciones"
         title={`Bienvenido, ${nombre}`}

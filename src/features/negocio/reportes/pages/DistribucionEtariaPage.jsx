@@ -132,7 +132,7 @@ export default function DistribucionEtariaPage() {
   };
 
   return (
-    <div className="max-w-7xl">
+    <div className="max-w-7xl mx-auto">
       <NegPageHeader
         eyebrow="HU 2-015"
         title="Distribución etaria"

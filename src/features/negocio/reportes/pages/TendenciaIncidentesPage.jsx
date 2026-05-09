@@ -160,7 +160,7 @@ export default function TendenciaIncidentesPage() {
   );
 
   return (
-    <div className="max-w-7xl">
+    <div className="max-w-7xl mx-auto">
       <NegPageHeader
         eyebrow="HU 2-016"
         title="Tendencia mensual de incidentes"

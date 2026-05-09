@@ -15,6 +15,21 @@ export async function listConductores() {
   return data;
 }
 
+export async function getConductorMe() {
+  const { data } = await negocioApi.get("/conductores/me");
+  return data;
+}
+
+export async function getMisBuses() {
+  const { data } = await negocioApi.get("/conductores/me/buses");
+  return data;
+}
+
+export async function getBusesPorConductor(conductorId) {
+  const { data } = await negocioApi.get(`/conductores/${conductorId}/buses`);
+  return data;
+}
+
 export async function listRutas() {
   const { data } = await negocioApi.get("/rutas");
   return data;
