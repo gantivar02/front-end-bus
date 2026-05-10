@@ -2,6 +2,7 @@ import negocioApi from "../../../services/negocioApi";
 
 export async function reporteRapidoIncidente({
   conductor_id,
+  bus_id,
   tipo,
   gravedad,
   descripcion,
@@ -10,7 +11,8 @@ export async function reporteRapidoIncidente({
   fotos = [],
 }) {
   const form = new FormData();
-  form.append("conductor_id", String(conductor_id));
+  if (conductor_id != null) form.append("conductor_id", String(conductor_id));
+  form.append("bus_id", String(bus_id));
   form.append("tipo", tipo);
   form.append("gravedad", gravedad);
   if (descripcion) form.append("descripcion", descripcion);

@@ -156,7 +156,7 @@ export default function IncidentesPorBusPage() {
   }, [incidentes]);
 
   return (
-    <div className="max-w-7xl">
+    <div className="max-w-7xl mx-auto">
       <NegPageHeader
         eyebrow="HU 2-008"
         title="Gestión de incidentes por bus"
@@ -264,8 +264,8 @@ export default function IncidentesPorBusPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
-        <div className="lg:col-span-2 space-y-3">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 h-[calc(100vh-360px)] min-h-[500px]">
+        <div className="lg:col-span-2 space-y-3 overflow-y-auto pr-2">
           {loadingIncidentes ? (
             <NegCard>
               <NegEmptyState
@@ -293,7 +293,7 @@ export default function IncidentesPorBusPage() {
             ))
           )}
         </div>
-        <div className="lg:col-span-3">
+        <div className="lg:col-span-3 overflow-y-auto">
           <IncidenteDetail
             incidente={selected}
             onChangeEstado={handleChangeEstado}

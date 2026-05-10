@@ -1,7 +1,18 @@
 import { createBrowserRouter } from "react-router-dom";
 import PrivateRoute from "./PrivateRoute";
 import AdminRoute from "./AdminRoute";
+import RoleRoute from "./RoleRoute";
 import RootRedirect from "./RootRedirect";
+import {
+  ROL_ADMIN_SISTEMA,
+  ROL_ADMIN_EMPRESA,
+  ROL_SUPERVISOR,
+  ROL_CONDUCTOR,
+  ROL_CIUDADANO,
+} from "../context/AuthContext";
+
+const ROLES_GESTION = [ROL_ADMIN_SISTEMA, ROL_ADMIN_EMPRESA, ROL_SUPERVISOR];
+const ROLES_ADMIN = [ROL_ADMIN_SISTEMA, ROL_ADMIN_EMPRESA];
 import MainLayout from "../components/layout/MainLayout";
 import NegocioLayout from "../components/layout/negocio/NegocioLayout";
 import LoginPage from "../features/auth/pages/LoginPage";
@@ -62,18 +73,51 @@ export const router = createBrowserRouter([
       { index: true, element: <NegocioHomePage /> },
       {
         path: "incidentes/reportar",
-        element: <ReporteRapidoPage />,
+        element: (
+          <RoleRoute allow={[...ROLES_ADMIN, ROL_CONDUCTOR]}>
+            <ReporteRapidoPage />
+          </RoleRoute>
+        ),
       },
-      { path: "incidentes/bus", element: <IncidentesPorBusPage /> },
-      { path: "recargas/nueva", element: <RecargarTarjetaPage /> },
-      { path: "reportes/ingresos", element: <IngresosPorMetodoPagoPage /> },
+      {
+        path: "incidentes/bus",
+        element: (
+          <RoleRoute allow={ROLES_GESTION}>
+            <IncidentesPorBusPage />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: "recargas/nueva",
+        element: (
+          <RoleRoute allow={[ROL_ADMIN_SISTEMA, ROL_CIUDADANO]}>
+            <RecargarTarjetaPage />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: "reportes/ingresos",
+        element: (
+          <RoleRoute allow={ROLES_GESTION}>
+            <IngresosPorMetodoPagoPage />
+          </RoleRoute>
+        ),
+      },
       {
         path: "reportes/distribucion-etaria",
-        element: <DistribucionEtariaPage />,
+        element: (
+          <RoleRoute allow={ROLES_GESTION}>
+            <DistribucionEtariaPage />
+          </RoleRoute>
+        ),
       },
       {
         path: "reportes/tendencia-incidentes",
-        element: <TendenciaIncidentesPage />,
+        element: (
+          <RoleRoute allow={ROLES_GESTION}>
+            <TendenciaIncidentesPage />
+          </RoleRoute>
+        ),
       },
       { path: "rutas", element: <RutasPage /> },
     ],

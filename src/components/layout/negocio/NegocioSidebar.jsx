@@ -1,10 +1,28 @@
 import { NavLink, useNavigate } from "react-router-dom";
-import { useAuth } from "../../../context/AuthContext";
+import {
+  useAuth,
+  ROL_ADMIN_SISTEMA,
+  ROL_ADMIN_EMPRESA,
+  ROL_SUPERVISOR,
+  ROL_CONDUCTOR,
+  ROL_CIUDADANO,
+} from "../../../context/AuthContext";
+
+const ROLES_GESTION = [ROL_ADMIN_SISTEMA, ROL_ADMIN_EMPRESA, ROL_SUPERVISOR];
+const ROLES_ADMIN = [ROL_ADMIN_SISTEMA, ROL_ADMIN_EMPRESA];
 
 const navGroups = [
   {
     title: "General",
-    items: [{ to: "/negocio", icon: "dashboard", label: "Inicio", end: true }],
+    items: [
+      {
+        to: "/negocio",
+        icon: "dashboard",
+        label: "Inicio",
+        end: true,
+        // Inicio visible para todos los roles autenticados
+      },
+    ],
   },
   {
     title: "Incidentes",
@@ -13,11 +31,13 @@ const navGroups = [
         to: "/negocio/incidentes/reportar",
         icon: "report",
         label: "Reporte rápido",
+        roles: [...ROLES_ADMIN, ROL_CONDUCTOR],
       },
       {
         to: "/negocio/incidentes/bus",
         icon: "directions_bus",
         label: "Gestión por bus",
+        roles: ROLES_GESTION,
       },
     ],
   },
@@ -28,6 +48,7 @@ const navGroups = [
         to: "/negocio/recargas/nueva",
         icon: "credit_card",
         label: "Nueva recarga",
+        roles: [ROL_ADMIN_SISTEMA, ROL_CIUDADANO],
       },
     ],
   },
@@ -48,29 +69,41 @@ const navGroups = [
         to: "/negocio/reportes/ingresos",
         icon: "paid",
         label: "Ingresos por método",
+        roles: ROLES_GESTION,
       },
       {
         to: "/negocio/reportes/distribucion-etaria",
         icon: "groups",
         label: "Distribución etaria",
+        roles: ROLES_GESTION,
       },
       {
         to: "/negocio/reportes/tendencia-incidentes",
         icon: "trending_up",
         label: "Tendencia incidentes",
+        roles: ROLES_GESTION,
       },
     ],
   },
 ];
 
 export default function NegocioSidebar() {
-  const { logout, isAdmin } = useAuth();
+  const { logout, isAdmin, hasAnyRole } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
     logout();
     navigate("/login");
   };
+
+  const visibleGroups = navGroups
+    .map((group) => ({
+      ...group,
+      items: group.items.filter(
+        (item) => !item.roles || hasAnyRole(item.roles),
+      ),
+    }))
+    .filter((group) => group.items.length > 0);
 
   return (
     <aside className="h-screen w-64 fixed left-0 top-0 overflow-y-auto bg-neg-surface-container-low flex flex-col py-6 px-4 z-50">
@@ -96,7 +129,7 @@ export default function NegocioSidebar() {
       </div>
 
       <nav className="flex-1 space-y-5">
-        {navGroups.map((group) => (
+        {visibleGroups.map((group) => (
           <div key={group.title}>
             <p className="px-3 mb-1.5 text-[10px] uppercase tracking-widest font-bold text-neg-on-surface-variant/80">
               {group.title}

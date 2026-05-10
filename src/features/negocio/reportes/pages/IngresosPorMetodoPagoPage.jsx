@@ -114,7 +114,7 @@ export default function IngresosPorMetodoPagoPage() {
   };
 
   return (
-    <div className="max-w-7xl">
+    <div className="max-w-7xl mx-auto">
       <NegPageHeader
         eyebrow="HU 2-014"
         title="Ingresos por método de pago"

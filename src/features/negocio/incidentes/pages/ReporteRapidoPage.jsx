@@ -13,11 +13,18 @@ import {
 import GravedadRadioCards from "../components/GravedadRadioCards";
 import PhotoUploader from "../components/PhotoUploader";
 import { TIPOS_INCIDENTE } from "../../_mocks/catalogos";
-import { listConductores } from "../../_services/catalogosService";
+import {
+  listConductores,
+  getConductorMe,
+  getMisBuses,
+  getBusesPorConductor,
+} from "../../_services/catalogosService";
 import { reporteRapidoIncidente } from "../../_services/incidentesService";
+import { useAuth } from "../../../../context/AuthContext";
 
 const INITIAL = {
   conductor_id: "",
+  bus_id: "",
   tipo: "",
   descripcion: "",
   gravedad: "medio",
@@ -31,30 +38,42 @@ function nombreConductor(c) {
   return nombre || `Conductor #${c.id}`;
 }
 
+function etiquetaBus(b) {
+  const placa = b.placa ?? `Bus #${b.id}`;
+  const modelo = b.modelo ? ` · ${b.modelo}` : "";
+  return `${placa}${modelo}`;
+}
+
 export default function ReporteRapidoPage() {
   const navigate = useNavigate();
+  const { isAdmin, isConductor } = useAuth();
   const [form, setForm] = useState(INITIAL);
   const [photos, setPhotos] = useState([]);
   const [conductores, setConductores] = useState([]);
-  const [loadingConductores, setLoadingConductores] = useState(true);
+  const [buses, setBuses] = useState([]);
+  const [loadingConductores, setLoadingConductores] = useState(isAdmin);
+  const [loadingBuses, setLoadingBuses] = useState(isConductor);
+  const [conductorMe, setConductorMe] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [geoState, setGeoState] = useState("idle");
   const [error, setError] = useState(null);
   const [result, setResult] = useState(null);
 
+  // Admin: cargar lista de conductores
   useEffect(() => {
+    if (!isAdmin) return;
     let alive = true;
+    setLoadingConductores(true);
     listConductores()
       .then((data) => {
-        if (!alive) return;
-        setConductores(Array.isArray(data) ? data : []);
+        if (alive) setConductores(Array.isArray(data) ? data : []);
       })
       .catch((err) => {
-        if (!alive) return;
-        setError(
-          err?.response?.data?.message ??
-            "No se pudo cargar la lista de conductores.",
-        );
+        if (alive)
+          setError(
+            err?.response?.data?.message ??
+              "No se pudo cargar la lista de conductores.",
+          );
       })
       .finally(() => {
         if (alive) setLoadingConductores(false);
@@ -62,7 +81,60 @@ export default function ReporteRapidoPage() {
     return () => {
       alive = false;
     };
-  }, []);
+  }, [isAdmin]);
+
+  // Conductor: cargar su propio perfil + buses asignados
+  useEffect(() => {
+    if (!isConductor) return;
+    let alive = true;
+    setLoadingBuses(true);
+    Promise.all([getConductorMe(), getMisBuses()])
+      .then(([me, misBuses]) => {
+        if (!alive) return;
+        setConductorMe(me);
+        setBuses(Array.isArray(misBuses) ? misBuses : []);
+      })
+      .catch((err) => {
+        if (alive)
+          setError(
+            err?.response?.data?.message ??
+              "No se pudieron cargar tus buses asignados.",
+          );
+      })
+      .finally(() => {
+        if (alive) setLoadingBuses(false);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [isConductor]);
+
+  // Admin: cuando elige conductor, cargar buses de ese conductor
+  useEffect(() => {
+    if (!isAdmin || !form.conductor_id) {
+      if (isAdmin) setBuses([]);
+      return;
+    }
+    let alive = true;
+    setLoadingBuses(true);
+    getBusesPorConductor(Number(form.conductor_id))
+      .then((data) => {
+        if (alive) setBuses(Array.isArray(data) ? data : []);
+      })
+      .catch((err) => {
+        if (alive)
+          setError(
+            err?.response?.data?.message ??
+              "No se pudieron cargar los buses del conductor.",
+          );
+      })
+      .finally(() => {
+        if (alive) setLoadingBuses(false);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [isAdmin, form.conductor_id]);
 
   const setField = (name, value) => setForm((f) => ({ ...f, [name]: value }));
 
@@ -84,7 +156,8 @@ export default function ReporteRapidoPage() {
   };
 
   const isValid =
-    form.conductor_id &&
+    (isConductor || (isAdmin && form.conductor_id)) &&
+    form.bus_id &&
     form.tipo &&
     form.gravedad &&
     form.latitud !== "" &&
@@ -98,15 +171,19 @@ export default function ReporteRapidoPage() {
     setSubmitting(true);
     setError(null);
     try {
-      const data = await reporteRapidoIncidente({
-        conductor_id: Number(form.conductor_id),
+      const payload = {
+        bus_id: Number(form.bus_id),
         tipo: form.tipo,
         gravedad: form.gravedad,
         descripcion: form.descripcion || undefined,
         latitud: Number(form.latitud),
         longitud: Number(form.longitud),
         fotos: photos,
-      });
+      };
+      if (isAdmin && form.conductor_id) {
+        payload.conductor_id = Number(form.conductor_id);
+      }
+      const data = await reporteRapidoIncidente(payload);
       setResult(data);
     } catch (err) {
       setError(
@@ -128,7 +205,7 @@ export default function ReporteRapidoPage() {
 
   if (result) {
     return (
-      <div className="max-w-2xl">
+      <div className="max-w-2xl mx-auto">
         <NegCard variant="elevated" padding="lg" className="text-center">
           <div className="w-16 h-16 rounded-full bg-neg-primary-container text-neg-on-primary-container flex items-center justify-center mx-auto mb-4">
             <span className="material-symbols-outlined text-[32px]">
@@ -146,20 +223,28 @@ export default function ReporteRapidoPage() {
             <NegButton variant="outlined" onClick={resetForm} icon="add">
               Nuevo reporte
             </NegButton>
-            <NegButton
-              onClick={() => navigate("/negocio/incidentes/bus")}
-              icon="list"
-            >
-              Ver incidentes
-            </NegButton>
+            {!isConductor && (
+              <NegButton
+                onClick={() => navigate("/negocio/incidentes/bus")}
+                icon="list"
+              >
+                Ver incidentes
+              </NegButton>
+            )}
           </div>
         </NegCard>
       </div>
     );
   }
 
+  const conductorActualNombre = conductorMe
+    ? `${conductorMe.persona?.nombre ?? ""} ${
+        conductorMe.persona?.apellido ?? ""
+      }`.trim()
+    : "";
+
   return (
-    <form onSubmit={handleSubmit} className="max-w-3xl">
+    <form onSubmit={handleSubmit} className="max-w-3xl mx-auto">
       <NegPageHeader
         eyebrow="HU 2-007"
         title="Reporte rápido de incidente"
@@ -178,24 +263,74 @@ export default function ReporteRapidoPage() {
       <div className="space-y-6">
         <NegCard>
           <NegSectionHeader
-            title="Conductor y tipo"
-            hint="El bus se detecta automáticamente desde el turno activo."
+            title={isAdmin ? "Conductor, bus y tipo" : "Bus y tipo"}
+            hint={
+              isConductor
+                ? "Estás reportando como conductor. Elegí el bus que estás operando."
+                : "Seleccioná el conductor y el bus involucrados."
+            }
           />
+
+          {isConductor && conductorMe && (
+            <div className="mb-4 p-3 rounded-lg bg-neg-surface-container-low">
+              <p className="text-xs text-neg-on-surface-variant uppercase tracking-wider font-semibold">
+                Conductor
+              </p>
+              <p className="text-sm font-semibold text-neg-on-surface mt-0.5">
+                {conductorActualNombre || `Conductor #${conductorMe.id}`}
+                {conductorMe.persona?.email && (
+                  <span className="ml-2 font-normal text-neg-on-surface-variant">
+                    · {conductorMe.persona.email}
+                  </span>
+                )}
+              </p>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {isAdmin && (
+              <NegSelect
+                label="Conductor"
+                name="conductor_id"
+                value={form.conductor_id}
+                onChange={(e) => {
+                  setField("conductor_id", e.target.value);
+                  setField("bus_id", "");
+                }}
+                placeholder={
+                  loadingConductores
+                    ? "Cargando conductores..."
+                    : "Seleccioná un conductor"
+                }
+                disabled={loadingConductores}
+                options={conductores.map((c) => ({
+                  value: c.id,
+                  label: nombreConductor(c),
+                }))}
+              />
+            )}
             <NegSelect
-              label="Conductor"
-              name="conductor_id"
-              value={form.conductor_id}
-              onChange={(e) => setField("conductor_id", e.target.value)}
+              label="Bus"
+              name="bus_id"
+              value={form.bus_id}
+              onChange={(e) => setField("bus_id", e.target.value)}
               placeholder={
-                loadingConductores
-                  ? "Cargando conductores..."
-                  : "Seleccioná un conductor"
+                loadingBuses
+                  ? "Cargando buses..."
+                  : isAdmin && !form.conductor_id
+                    ? "Elegí primero un conductor"
+                    : buses.length === 0
+                      ? "Sin buses asignados"
+                      : "Seleccioná un bus"
               }
-              disabled={loadingConductores}
-              options={conductores.map((c) => ({
-                value: c.id,
-                label: nombreConductor(c),
+              disabled={
+                loadingBuses ||
+                (isAdmin && !form.conductor_id) ||
+                buses.length === 0
+              }
+              options={buses.map((b) => ({
+                value: b.id,
+                label: etiquetaBus(b),
               }))}
             />
             <NegSelect
