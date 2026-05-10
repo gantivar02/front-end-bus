@@ -18,6 +18,7 @@ import RecargarTarjetaPage from "../features/negocio/recargas/pages/RecargarTarj
 import IngresosPorMetodoPagoPage from "../features/negocio/reportes/pages/IngresosPorMetodoPagoPage";
 import DistribucionEtariaPage from "../features/negocio/reportes/pages/DistribucionEtariaPage";
 import TendenciaIncidentesPage from "../features/negocio/reportes/pages/TendenciaIncidentesPage";
+import RutasPage from "../features/negocio/rutas/pages/RutasPage";
 import DashboardPage from "../features/dashboard/pages/DashboardPage";
 import UsersPage from "../features/users/pages/UsersPage";
 import RolesPage from "../features/roles/pages/RolesPage";
@@ -74,6 +75,7 @@ export const router = createBrowserRouter([
         path: "reportes/tendencia-incidentes",
         element: <TendenciaIncidentesPage />,
       },
+      { path: "rutas", element: <RutasPage /> },
     ],
   },
 

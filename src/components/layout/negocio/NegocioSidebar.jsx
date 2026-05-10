@@ -32,6 +32,16 @@ const navGroups = [
     ],
   },
   {
+    title: "Rutas",
+    items: [
+      {
+        to: "/negocio/rutas",
+        icon: "route",
+        label: "Administrar rutas",
+      },
+    ],
+  },
+  {
     title: "Reportes",
     items: [
       {
