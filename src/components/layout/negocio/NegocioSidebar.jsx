@@ -53,12 +53,17 @@ const navGroups = [
     ],
   },
   {
-    title: "Rutas",
+    title: "Rutas y Paraderos",
     items: [
       {
         to: "/negocio/rutas",
         icon: "route",
         label: "Administrar rutas",
+      },
+      {
+        to: "/negocio/paraderos",
+        icon: "add_location",
+        label: "Administrar paraderos",
       },
     ],
   },

@@ -30,6 +30,7 @@ import IngresosPorMetodoPagoPage from "../features/negocio/reportes/pages/Ingres
 import DistribucionEtariaPage from "../features/negocio/reportes/pages/DistribucionEtariaPage";
 import TendenciaIncidentesPage from "../features/negocio/reportes/pages/TendenciaIncidentesPage";
 import RutasPage from "../features/negocio/rutas/pages/RutasPage";
+import ParaderosPage from "../features/negocio/paraderos/pages/ParaderosPage";
 import DashboardPage from "../features/dashboard/pages/DashboardPage";
 import UsersPage from "../features/users/pages/UsersPage";
 import RolesPage from "../features/roles/pages/RolesPage";
@@ -120,6 +121,7 @@ export const router = createBrowserRouter([
         ),
       },
       { path: "rutas", element: <RutasPage /> },
+      { path: "paraderos", element: <ParaderosPage /> },
     ],
   },
 
