@@ -31,6 +31,7 @@ import DistribucionEtariaPage from "../features/negocio/reportes/pages/Distribuc
 import TendenciaIncidentesPage from "../features/negocio/reportes/pages/TendenciaIncidentesPage";
 import RutasPage from "../features/negocio/rutas/pages/RutasPage";
 import ParaderosPage from "../features/negocio/paraderos/pages/ParaderosPage";
+import ParaderosCercanosPage from "../features/negocio/paraderos/pages/ParaderosCercanosPage";
 import DashboardPage from "../features/dashboard/pages/DashboardPage";
 import UsersPage from "../features/users/pages/UsersPage";
 import RolesPage from "../features/roles/pages/RolesPage";
@@ -121,7 +122,15 @@ export const router = createBrowserRouter([
         ),
       },
       { path: "rutas", element: <RutasPage /> },
-      { path: "paraderos", element: <ParaderosPage /> },
+      { path: "paraderos/cercanos", element: <ParaderosCercanosPage /> },
+      {
+        path: "paraderos",
+        element: (
+          <RoleRoute allow={ROLES_ADMIN}>
+            <ParaderosPage />
+          </RoleRoute>
+        ),
+      },
     ],
   },
 

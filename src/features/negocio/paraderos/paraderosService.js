@@ -5,6 +5,17 @@ export async function listParaderos() {
   return data;
 }
 
+export async function listParaderosCercanos({
+  latitud,
+  longitud,
+  limite = 5,
+}) {
+  const { data } = await negocioApi.get("/paraderos/cercanos", {
+    params: { latitud, longitud, limite },
+  });
+  return data;
+}
+
 export async function createParadero(payload) {
   const { data } = await negocioApi.post("/paraderos", payload);
   return data;

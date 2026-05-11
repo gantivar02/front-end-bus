@@ -58,12 +58,18 @@ const navGroups = [
       {
         to: "/negocio/rutas",
         icon: "route",
-        label: "Administrar rutas",
+        label: "Rutas disponibles",
+      },
+      {
+        to: "/negocio/paraderos/cercanos",
+        icon: "near_me",
+        label: "Paraderos cercanos",
       },
       {
         to: "/negocio/paraderos",
         icon: "add_location",
         label: "Administrar paraderos",
+        roles: ROLES_ADMIN,
       },
     ],
   },
