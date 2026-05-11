@@ -1,7 +1,9 @@
 import negocioApi from "../../../services/negocioApi";
 
-export async function listRutas() {
-  const { data } = await negocioApi.get("/rutas");
+export async function listRutas({ nombre } = {}) {
+  const params = {};
+  if (nombre) params.nombre = nombre;
+  const { data } = await negocioApi.get("/rutas", { params });
   return data;
 }
 

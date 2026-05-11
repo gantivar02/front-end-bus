@@ -1,11 +1,17 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   NegPageHeader,
   NegCard,
   NegButton,
   NegDataTable,
+  NegEmptyState,
+  NegFilterBar,
+  NegInput,
+  NegChip,
   NegSectionHeader,
 } from "../../../../components/negocio";
+import { useAuth } from "../../../../context/AuthContext";
+import { formatCurrency } from "../../_utils/format";
 import RutaForm from "../components/RutaForm";
 import RutaMapa from "../components/RutaMapa";
 import {
@@ -17,14 +23,6 @@ import {
   getRutaParaMapa,
 } from "../rutasService";
 
-function formatCOP(value) {
-  return new Intl.NumberFormat("es-CO", {
-    style: "currency",
-    currency: "COP",
-    maximumFractionDigits: 0,
-  }).format(value);
-}
-
 function formatMinutes(min) {
   if (min == null) return "—";
   const h = Math.floor(min / 60);
@@ -33,23 +31,31 @@ function formatMinutes(min) {
   return `${h}h${m > 0 ? ` ${m}min` : ""}`;
 }
 
-function buildColumns(onEdit, onDeleteRequest, onVerMapa) {
+function buildColumns({
+  canManage,
+  onEdit,
+  onDeleteRequest,
+  onSelect,
+  selectedRutaId,
+}) {
   return [
     {
-      key: "codigo_ruta",
-      header: "Código",
-      width: 130,
-      render: (r) => (
-        <span className="font-mono text-xs bg-neg-primary-container/40 text-neg-on-primary-container px-2 py-0.5 rounded-md">
-          {r.codigo_ruta ?? "—"}
-        </span>
-      ),
-    },
-    {
       key: "nombre",
-      header: "Nombre",
+      header: "Ruta",
       render: (r) => (
-        <span className="font-medium text-neg-on-surface">{r.nombre}</span>
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <span className="font-medium text-neg-on-surface">{r.nombre}</span>
+            {selectedRutaId === r.id && (
+              <NegChip tone="primary" icon="visibility">
+                Seleccionada
+              </NegChip>
+            )}
+          </div>
+          <p className="text-xs text-neg-on-surface-variant leading-relaxed">
+            {r.descripcion?.trim() || "Sin descripción registrada."}
+          </p>
+        </div>
       ),
     },
     {
@@ -57,7 +63,9 @@ function buildColumns(onEdit, onDeleteRequest, onVerMapa) {
       header: "Tarifa",
       width: 120,
       render: (r) => (
-        <span className="text-neg-on-surface-variant">{formatCOP(r.tarifa)}</span>
+        <span className="text-neg-on-surface-variant">
+          {formatCurrency(r.tarifa)}
+        </span>
       ),
     },
     {
@@ -71,15 +79,13 @@ function buildColumns(onEdit, onDeleteRequest, onVerMapa) {
       ),
     },
     {
-      key: "paraderos",
-      header: "Paradas",
-      width: 90,
+      key: "codigo_ruta",
+      header: "Código",
+      width: 130,
       render: (r) => {
-        const count = r.rutaParaderos?.length ?? "—";
         return (
-          <span className="inline-flex items-center gap-1 text-neg-on-surface-variant text-sm">
-            <span className="material-symbols-outlined text-[14px]">stop_circle</span>
-            {count}
+          <span className="font-mono text-xs bg-neg-primary-container/40 text-neg-on-primary-container px-2 py-0.5 rounded-md">
+            {r.codigo_ruta ?? "—"}
           </span>
         );
       },
@@ -91,26 +97,39 @@ function buildColumns(onEdit, onDeleteRequest, onVerMapa) {
       render: (r) => (
         <div className="flex items-center gap-0.5">
           <button
-            onClick={(e) => { e.stopPropagation(); onVerMapa(r); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onSelect(r);
+            }}
             className="p-1.5 rounded-lg text-neg-on-surface-variant hover:text-neg-primary hover:bg-neg-primary/10 transition-colors"
-            title="Ver en mapa"
+            title="Ver detalle"
           >
-            <span className="material-symbols-outlined text-[18px]">map</span>
+            <span className="material-symbols-outlined text-[18px]">visibility</span>
           </button>
-          <button
-            onClick={(e) => { e.stopPropagation(); onEdit(r); }}
-            className="p-1.5 rounded-lg text-neg-on-surface-variant hover:text-neg-primary hover:bg-neg-primary/10 transition-colors"
-            title="Editar"
-          >
-            <span className="material-symbols-outlined text-[18px]">edit</span>
-          </button>
-          <button
-            onClick={(e) => { e.stopPropagation(); onDeleteRequest(r); }}
-            className="p-1.5 rounded-lg text-neg-on-surface-variant hover:text-neg-error hover:bg-neg-error/10 transition-colors"
-            title="Eliminar"
-          >
-            <span className="material-symbols-outlined text-[18px]">delete</span>
-          </button>
+          {canManage && (
+            <>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit(r);
+                }}
+                className="p-1.5 rounded-lg text-neg-on-surface-variant hover:text-neg-primary hover:bg-neg-primary/10 transition-colors"
+                title="Editar"
+              >
+                <span className="material-symbols-outlined text-[18px]">edit</span>
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDeleteRequest(r);
+                }}
+                className="p-1.5 rounded-lg text-neg-on-surface-variant hover:text-neg-error hover:bg-neg-error/10 transition-colors"
+                title="Eliminar"
+              >
+                <span className="material-symbols-outlined text-[18px]">delete</span>
+              </button>
+            </>
+          )}
         </div>
       ),
     },
@@ -118,10 +137,17 @@ function buildColumns(onEdit, onDeleteRequest, onVerMapa) {
 }
 
 export default function RutasPage() {
+  const { isAdmin } = useAuth();
   const [rutas, setRutas] = useState([]);
   const [paraderosCatalog, setParaderosCatalog] = useState([]);
   const [loading, setLoading] = useState(true);
   const [listError, setListError] = useState(null);
+  const [detailError, setDetailError] = useState(null);
+  const [search, setSearch] = useState("");
+  const [filtroNombre, setFiltroNombre] = useState("");
+  const [selectedRutaId, setSelectedRutaId] = useState(null);
+  const [rutaDetalle, setRutaDetalle] = useState(null);
+  const [loadingDetalle, setLoadingDetalle] = useState(false);
 
   const [showForm, setShowForm] = useState(false);
   const [editingRuta, setEditingRuta] = useState(null);
@@ -131,16 +157,35 @@ export default function RutasPage() {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
 
-  const [mapaRuta, setMapaRuta] = useState(null);
-  const [loadingMapa, setLoadingMapa] = useState(false);
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setFiltroNombre(search.trim());
+    }, 250);
+    return () => window.clearTimeout(timer);
+  }, [search]);
 
-  const load = () => {
+  const load = (preferredSelectedId = null) => {
     setLoading(true);
     setListError(null);
-    Promise.all([listRutas(), listParaderos()])
+    Promise.all([listRutas({ nombre: filtroNombre }), listParaderos()])
       .then(([rutasData, paraderosData]) => {
-        setRutas(Array.isArray(rutasData) ? rutasData : []);
+        const rutasList = Array.isArray(rutasData) ? rutasData : [];
+        setRutas(rutasList);
         setParaderosCatalog(Array.isArray(paraderosData) ? paraderosData : []);
+        if (rutasList.length === 0) {
+          setSelectedRutaId(null);
+          return;
+        }
+
+        const candidato =
+          preferredSelectedId != null &&
+          rutasList.some((ruta) => ruta.id === preferredSelectedId)
+            ? preferredSelectedId
+            : rutasList.some((ruta) => ruta.id === selectedRutaId)
+              ? selectedRutaId
+              : rutasList[0].id;
+
+        setSelectedRutaId(candidato);
       })
       .catch((err) =>
         setListError(err?.response?.data?.message ?? "No se pudo cargar la información."),
@@ -148,7 +193,40 @@ export default function RutasPage() {
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+  }, [filtroNombre]);
+
+  useEffect(() => {
+    if (selectedRutaId == null) {
+      setRutaDetalle(null);
+      setDetailError(null);
+      return;
+    }
+
+    let alive = true;
+    setLoadingDetalle(true);
+    setDetailError(null);
+
+    getRutaParaMapa(selectedRutaId)
+      .then((data) => {
+        if (alive) setRutaDetalle(data);
+      })
+      .catch((err) => {
+        if (!alive) return;
+        setRutaDetalle(null);
+        setDetailError(
+          err?.response?.data?.message ?? "No se pudo cargar el detalle de la ruta.",
+        );
+      })
+      .finally(() => {
+        if (alive) setLoadingDetalle(false);
+      });
+
+    return () => {
+      alive = false;
+    };
+  }, [selectedRutaId]);
 
   const openCreate = () => {
     setEditingRuta(null);
@@ -172,13 +250,14 @@ export default function RutasPage() {
     setSubmitting(true);
     setSubmitError(null);
     try {
+      let savedRuta;
       if (editingRuta) {
-        await updateRuta(editingRuta.id, payload);
+        savedRuta = await updateRuta(editingRuta.id, payload);
       } else {
-        await createRutaConParaderos(payload);
+        savedRuta = await createRutaConParaderos(payload);
       }
       closeForm();
-      load();
+      load(savedRuta?.id ?? null);
     } catch (err) {
       setSubmitError(err?.response?.data?.message ?? "No se pudo guardar la ruta.");
     } finally {
@@ -191,8 +270,9 @@ export default function RutasPage() {
     setDeleting(true);
     try {
       await deleteRuta(deleteTarget.id);
+      const deletedId = deleteTarget.id;
       setDeleteTarget(null);
-      load();
+      load(selectedRutaId === deletedId ? null : selectedRutaId);
     } catch (err) {
       setListError(err?.response?.data?.message ?? "No se pudo eliminar la ruta.");
       setDeleteTarget(null);
@@ -201,31 +281,34 @@ export default function RutasPage() {
     }
   };
 
-  const openMapa = async (ruta) => {
-    setLoadingMapa(true);
-    setMapaRuta(null);
-    try {
-      const data = await getRutaParaMapa(ruta.id);
-      setMapaRuta(data);
-    } catch {
-      setListError("No se pudo cargar el mapa de la ruta.");
-    } finally {
-      setLoadingMapa(false);
-    }
-  };
+  const columns = buildColumns({
+    canManage: isAdmin,
+    onEdit: openEdit,
+    onDeleteRequest: setDeleteTarget,
+    onSelect: (ruta) => setSelectedRutaId(ruta.id),
+    selectedRutaId,
+  });
 
-  const columns = buildColumns(openEdit, setDeleteTarget, openMapa);
+  const rutaSeleccionada = useMemo(
+    () =>
+      (rutaDetalle?.id ?? null) === selectedRutaId
+        ? rutaDetalle
+        : rutas.find((ruta) => ruta.id === selectedRutaId) ?? null,
+    [rutaDetalle, rutas, selectedRutaId],
+  );
 
   return (
     <div className="max-w-5xl">
       <NegPageHeader
-        eyebrow="HU 2-009"
-        title="Administración de rutas"
-        subtitle="Creá y gestioná las rutas del sistema de transporte con sus paraderos y tarifas."
+        eyebrow="HU 2-001"
+        title="Rutas disponibles"
+        subtitle="Consulta las rutas del sistema, su tarifa, descripción y recorrido estimado."
         actions={
-          <NegButton icon="add_road" onClick={openCreate}>
-            Nueva ruta
-          </NegButton>
+          isAdmin ? (
+            <NegButton icon="add_road" onClick={openCreate}>
+              Nueva ruta
+            </NegButton>
+          ) : null
         }
       />
 
@@ -237,6 +320,18 @@ export default function RutasPage() {
           </div>
         </NegCard>
       )}
+
+      <NegFilterBar className="mb-5">
+        <NegInput
+          label="Filtrar por nombre"
+          name="nombre"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Ej. Centro, Norte, Terminal..."
+          iconStart="search"
+          hint={`${rutas.length} ruta${rutas.length === 1 ? "" : "s"} en el listado`}
+        />
+      </NegFilterBar>
 
       <NegCard padding="none">
         {loading ? (
@@ -254,62 +349,137 @@ export default function RutasPage() {
             columns={columns}
             rows={rutas}
             keyField="id"
-            emptyMessage="No hay rutas registradas. Creá la primera con el botón Nueva ruta."
+            emptyMessage="No hay rutas disponibles con el filtro actual."
+            onRowClick={(ruta) => setSelectedRutaId(ruta.id)}
           />
         )}
       </NegCard>
 
-      {/* Modal mapa */}
-      {(loadingMapa || mapaRuta) && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center px-4">
-          <div
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-            onClick={() => { setMapaRuta(null); setLoadingMapa(false); }}
+      <NegCard className="mt-5">
+        <NegSectionHeader
+          title="Detalle de la ruta"
+          hint="Selecciona una fila del listado para ver el recorrido completo."
+        />
+
+        {!selectedRutaId ? (
+          <NegEmptyState
+            icon="route"
+            title="Sin ruta seleccionada"
+            description="Elige una ruta del listado para ver sus paraderos en el mapa."
           />
-          <div className="relative z-10 w-full max-w-3xl bg-neg-surface rounded-2xl shadow-2xl overflow-hidden">
-            <div className="px-6 py-5 border-b border-neg-outline-variant/40 flex items-center justify-between">
-              <div>
-                <p className="text-[10px] uppercase tracking-widest font-bold text-neg-primary">
-                  Mapa de ruta
+        ) : loadingDetalle && !rutaSeleccionada ? (
+          <NegEmptyState
+            icon="hourglass_top"
+            title="Cargando detalle..."
+            description="Un momento mientras preparamos el recorrido."
+          />
+        ) : detailError ? (
+          <NegEmptyState
+            icon="error"
+            title="No se pudo cargar la ruta"
+            description={detailError}
+          />
+        ) : !rutaSeleccionada ? (
+          <NegEmptyState
+            icon="search_off"
+            title="Ruta no disponible"
+            description="La ruta seleccionada ya no está disponible en el listado actual."
+          />
+        ) : (
+          <div className="space-y-5">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+              <NegCard variant="subtle" padding="sm">
+                <p className="text-xs uppercase tracking-wider font-semibold text-neg-on-surface-variant">
+                  Ruta
                 </p>
-                <h2 className="font-headline text-xl font-bold text-neg-on-surface">
-                  {mapaRuta?.nombre ?? "Cargando..."}
-                </h2>
-                {mapaRuta?.codigo_ruta && (
-                  <p className="text-xs font-mono text-neg-on-surface-variant mt-0.5">
-                    {mapaRuta.codigo_ruta}
-                  </p>
-                )}
-              </div>
-              <button
-                onClick={() => { setMapaRuta(null); setLoadingMapa(false); }}
-                className="p-2 rounded-full hover:bg-neg-surface-container transition-colors"
-              >
-                <span className="material-symbols-outlined text-neg-on-surface-variant">close</span>
-              </button>
+                <p className="font-headline text-lg font-bold text-neg-on-surface mt-1">
+                  {rutaSeleccionada.nombre}
+                </p>
+                <p className="text-xs font-mono text-neg-on-surface-variant mt-1">
+                  {rutaSeleccionada.codigo_ruta ?? "Sin código"}
+                </p>
+              </NegCard>
+              <NegCard variant="subtle" padding="sm">
+                <p className="text-xs uppercase tracking-wider font-semibold text-neg-on-surface-variant">
+                  Tarifa
+                </p>
+                <p className="font-headline text-lg font-bold text-neg-on-surface mt-1">
+                  {formatCurrency(rutaSeleccionada.tarifa)}
+                </p>
+              </NegCard>
+              <NegCard variant="subtle" padding="sm">
+                <p className="text-xs uppercase tracking-wider font-semibold text-neg-on-surface-variant">
+                  Tiempo estimado total
+                </p>
+                <p className="font-headline text-lg font-bold text-neg-on-surface mt-1">
+                  {formatMinutes(rutaSeleccionada.tiempo_estimado_min)}
+                </p>
+              </NegCard>
+              <NegCard variant="subtle" padding="sm">
+                <p className="text-xs uppercase tracking-wider font-semibold text-neg-on-surface-variant">
+                  Paraderos
+                </p>
+                <p className="font-headline text-lg font-bold text-neg-on-surface mt-1">
+                  {rutaSeleccionada.rutaParaderos?.length ?? 0}
+                </p>
+              </NegCard>
             </div>
 
-            <div className="p-6">
-              {loadingMapa ? (
-                <div className="py-16 text-center text-neg-on-surface-variant text-sm">
-                  <span
-                    className="material-symbols-outlined text-[36px] block mb-2 animate-spin"
-                    style={{ animationDuration: "1s" }}
-                  >
-                    progress_activity
-                  </span>
-                  Cargando mapa...
-                </div>
-              ) : (
-                <RutaMapa rutaParaderos={mapaRuta?.rutaParaderos ?? []} />
-              )}
+            <div>
+              <p className="text-sm font-semibold text-neg-on-surface mb-1">
+                Descripción
+              </p>
+              <p className="text-sm text-neg-on-surface-variant leading-relaxed">
+                {rutaSeleccionada.descripcion?.trim() ||
+                  "Esta ruta no tiene una descripción registrada."}
+              </p>
             </div>
+
+            <RutaMapa rutaParaderos={rutaSeleccionada.rutaParaderos ?? []} />
+
+            {Array.isArray(rutaSeleccionada.rutaParaderos) &&
+              rutaSeleccionada.rutaParaderos.length > 0 && (
+                <div>
+                  <p className="text-sm font-semibold text-neg-on-surface mb-3">
+                    Paraderos en orden secuencial
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {rutaSeleccionada.rutaParaderos.map((rp) => (
+                      <div
+                        key={rp.id ?? `${rp.orden}-${rp.paradero?.id ?? "x"}`}
+                        className="rounded-xl border border-neg-outline-variant/40 bg-neg-surface-container-lowest px-4 py-3"
+                      >
+                        <div className="flex items-start gap-3">
+                          <span className="w-7 h-7 rounded-full bg-neg-primary-container text-neg-on-primary-container text-xs font-bold flex items-center justify-center shrink-0">
+                            {rp.orden}
+                          </span>
+                          <div className="min-w-0">
+                            <p className="font-medium text-neg-on-surface">
+                              {rp.paradero?.nombre ?? `Paradero #${rp.paradero_id ?? "—"}`}
+                            </p>
+                            <p className="text-xs text-neg-on-surface-variant mt-1">
+                              {rp.paradero?.tipo ?? "Tipo no definido"}
+                            </p>
+                            <p className="text-xs text-neg-on-surface-variant mt-1">
+                              {rp.distancia_desde_anterior != null
+                                ? `${rp.distancia_desde_anterior} km desde el anterior`
+                                : "Inicio del recorrido"}
+                              {" · "}
+                              {rp.tiempo_estimado_min} min
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
           </div>
-        </div>
-      )}
+        )}
+      </NegCard>
 
       {/* Panel lateral — formulario */}
-      {showForm && (
+      {isAdmin && showForm && (
         <div className="fixed inset-0 z-40 flex">
           <div
             className="absolute inset-0 bg-black/40 backdrop-blur-sm"
@@ -359,7 +529,7 @@ export default function RutasPage() {
       )}
 
       {/* Modal confirmación eliminación */}
-      {deleteTarget && (
+      {isAdmin && deleteTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
           <div
             className="absolute inset-0 bg-black/50 backdrop-blur-sm"
