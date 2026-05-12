@@ -32,6 +32,7 @@ import TendenciaIncidentesPage from "../features/negocio/reportes/pages/Tendenci
 import RutasPage from "../features/negocio/rutas/pages/RutasPage";
 import ParaderosPage from "../features/negocio/paraderos/pages/ParaderosPage";
 import ParaderosCercanosPage from "../features/negocio/paraderos/pages/ParaderosCercanosPage";
+import AbordajePage from "../features/negocio/boletos/pages/AbordajePage";
 import DashboardPage from "../features/dashboard/pages/DashboardPage";
 import UsersPage from "../features/users/pages/UsersPage";
 import RolesPage from "../features/roles/pages/RolesPage";
@@ -94,6 +95,14 @@ export const router = createBrowserRouter([
         element: (
           <RoleRoute allow={[ROL_ADMIN_SISTEMA, ROL_CIUDADANO]}>
             <RecargarTarjetaPage />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: "boletos/abordaje",
+        element: (
+          <RoleRoute allow={[ROL_CIUDADANO]}>
+            <AbordajePage />
           </RoleRoute>
         ),
       },

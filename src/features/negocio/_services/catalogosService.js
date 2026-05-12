@@ -45,6 +45,11 @@ export async function listMetodosPagoCiudadano() {
   return data;
 }
 
+export async function listMisMetodosPagoCiudadano() {
+  const { data } = await negocioApi.get("/metodos-pago-ciudadano/mis-metodos");
+  return data;
+}
+
 export async function getMetodoPagoCiudadano(id) {
   const { data } = await negocioApi.get(`/metodos-pago-ciudadano/${id}`);
   return data;

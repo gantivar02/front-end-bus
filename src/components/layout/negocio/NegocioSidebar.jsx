@@ -53,6 +53,17 @@ const navGroups = [
     ],
   },
   {
+    title: "Uso del servicio",
+    items: [
+      {
+        to: "/negocio/boletos/abordaje",
+        icon: "confirmation_number",
+        label: "Abordar bus",
+        roles: [ROL_CIUDADANO],
+      },
+    ],
+  },
+  {
     title: "Rutas y Paraderos",
     items: [
       {
