@@ -85,6 +85,28 @@ const navGroups = [
     ],
   },
   {
+    title: "Flota",
+    items: [
+      {
+        to: "/negocio/buses",
+        icon: "directions_bus",
+        label: "Gestión de buses",
+        roles: ROLES_ADMIN,
+      },
+    ],
+  },
+  {
+    title: "Programación",
+    items: [
+      {
+        to: "/negocio/programaciones",
+        icon: "calendar_month",
+        label: "Programar rutas",
+        roles: ROLES_ADMIN,
+      },
+    ],
+  },
+  {
     title: "Reportes",
     items: [
       {
