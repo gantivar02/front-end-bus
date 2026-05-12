@@ -74,6 +74,17 @@ const navGroups = [
     ],
   },
   {
+    title: "Programación",
+    items: [
+      {
+        to: "/negocio/programaciones",
+        icon: "calendar_month",
+        label: "Programar rutas",
+        roles: ROLES_ADMIN,
+      },
+    ],
+  },
+  {
     title: "Reportes",
     items: [
       {
