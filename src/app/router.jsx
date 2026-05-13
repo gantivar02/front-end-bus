@@ -33,6 +33,10 @@ import RutasPage from "../features/negocio/rutas/pages/RutasPage";
 import ParaderosPage from "../features/negocio/paraderos/pages/ParaderosPage";
 import ParaderosCercanosPage from "../features/negocio/paraderos/pages/ParaderosCercanosPage";
 import AbordajePage from "../features/negocio/boletos/pages/AbordajePage";
+import DescensoPage from "../features/negocio/boletos/pages/DescensoPage";
+import HistorialViajesPage from "../features/negocio/boletos/pages/HistorialViajesPage";
+import InicioTurnoPage from "../features/negocio/turnos/pages/InicioTurnoPage";
+import TurnosPage from "../features/negocio/turnos/pages/TurnosPage";
 import ProgramacionesPage from "../features/negocio/programaciones/pages/ProgramacionesPage";
 import BusesPage from "../features/negocio/buses/pages/BusesPage";
 import DashboardPage from "../features/dashboard/pages/DashboardPage";
@@ -105,6 +109,38 @@ export const router = createBrowserRouter([
         element: (
           <RoleRoute allow={[ROL_CIUDADANO]}>
             <AbordajePage />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: "boletos/descenso",
+        element: (
+          <RoleRoute allow={[ROL_CIUDADANO]}>
+            <DescensoPage />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: "boletos/historial",
+        element: (
+          <RoleRoute allow={[ROL_CIUDADANO]}>
+            <HistorialViajesPage />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: "turnos/inicio",
+        element: (
+          <RoleRoute allow={[ROL_CONDUCTOR]}>
+            <InicioTurnoPage />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: "turnos",
+        element: (
+          <RoleRoute allow={ROLES_ADMIN}>
+            <TurnosPage />
           </RoleRoute>
         ),
       },

@@ -61,6 +61,35 @@ const navGroups = [
         label: "Abordar bus",
         roles: [ROL_CIUDADANO],
       },
+      {
+        to: "/negocio/boletos/descenso",
+        icon: "logout",
+        label: "Descender bus",
+        roles: [ROL_CIUDADANO],
+      },
+      {
+        to: "/negocio/boletos/historial",
+        icon: "history",
+        label: "Historial de viajes",
+        roles: [ROL_CIUDADANO],
+      },
+    ],
+  },
+  {
+    title: "Conductores y turnos",
+    items: [
+      {
+        to: "/negocio/turnos",
+        icon: "calendar_month",
+        label: "Gestionar turnos",
+        roles: ROLES_ADMIN,
+      },
+      {
+        to: "/negocio/turnos/inicio",
+        icon: "play_circle",
+        label: "Iniciar turno",
+        roles: [ROL_CONDUCTOR],
+      },
     ],
   },
   {
