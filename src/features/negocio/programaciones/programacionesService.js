@@ -20,7 +20,7 @@ export async function deleteProgramacion(id) {
 }
 
 export async function listBuses() {
-  const { data } = await negocioApi.get("/buses");
+  const { data } = await negocioApi.get("/buses/operativos");
   return data;
 }
 
