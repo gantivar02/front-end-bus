@@ -13,7 +13,17 @@ import {
   NegEmptyState,
 } from "../../../../components/negocio";
 import DonutChart from "../components/DonutChart";
+import StackedBarChart from "../components/StackedBarChart";
 import { formatCurrency } from "../../_utils/format";
+
+const TONE_HEX = {
+  primary: "#006948",
+  secondary: "#4d6357",
+  tertiary: "#224959",
+  danger: "#ba1a1a",
+  amber: "#d97706",
+  violet: "#7c3aed",
+};
 import {
   ingresosPorMetodoPago,
   descargarIngresosPorMetodoPagoExcel,
@@ -214,6 +224,32 @@ export default function IngresosPorMetodoPagoPage() {
               iconTone="primary"
             />
           </section>
+
+          <NegCard className="mb-6">
+            <NegSectionHeader
+              title="Evolución mensual por método"
+              hint="Barras apiladas: cada barra representa un mes y los segmentos muestran la contribución de cada método de pago."
+            />
+            <StackedBarChart
+              labels={mesesSerie.map(formatearMes)}
+              series={rows.map((r) => ({
+                label: r.metodo,
+                color: TONE_HEX[r.tone] ?? "#006948",
+                values: mesesSerie.map((mes) => {
+                  const punto = r.datos_mensuales.find((p) => p.mes === mes);
+                  return Number(punto?.ingresos ?? 0);
+                }),
+              }))}
+              valueFormatter={(v) =>
+                v >= 1_000_000
+                  ? `${(v / 1_000_000).toFixed(1)}M`
+                  : v >= 1000
+                    ? `${(v / 1000).toFixed(0)}k`
+                    : String(v)
+              }
+              height={300}
+            />
+          </NegCard>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-6">
             <NegCard className="lg:col-span-1 flex flex-col items-center">

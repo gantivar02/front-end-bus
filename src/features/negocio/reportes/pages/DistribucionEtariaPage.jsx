@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   NegPageHeader,
   NegCard,
@@ -31,6 +31,9 @@ export default function DistribucionEtariaPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [descargando, setDescargando] = useState(false);
+  const [descargandoPng, setDescargandoPng] = useState(false);
+  const [selectedSegment, setSelectedSegment] = useState(null);
+  const chartRef = useRef(null);
 
   useEffect(() => {
     let alive = true;
@@ -125,10 +128,31 @@ export default function DistribucionEtariaPage() {
     }
   };
 
+  const handleExportarPng = async () => {
+    if (!chartRef.current) return;
+    setDescargandoPng(true);
+    try {
+      const { default: html2canvas } = await import("html2canvas");
+      const canvas = await html2canvas(chartRef.current, {
+        backgroundColor: "#ffffff",
+        scale: 2,
+      });
+      const link = document.createElement("a");
+      link.download = `distribucion-etaria-${new Date().toISOString().slice(0, 10)}.png`;
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+    } catch (err) {
+      setError(err?.message ?? "No se pudo generar la imagen PNG.");
+    } finally {
+      setDescargandoPng(false);
+    }
+  };
+
   const handleLimpiar = () => {
     setRutaId("");
     setFechaInicio("");
     setFechaFin("");
+    setSelectedSegment(null);
   };
 
   return (
@@ -138,13 +162,23 @@ export default function DistribucionEtariaPage() {
         title="Distribución etaria"
         subtitle="Perfil demográfico de los pasajeros por rango de edad."
         actions={
-          <NegButton
-            icon={descargando ? "hourglass_top" : "download"}
-            onClick={handleExportar}
-            disabled={descargando || !reporte}
-          >
-            {descargando ? "Descargando..." : "Exportar Excel"}
-          </NegButton>
+          <div className="flex items-center gap-2">
+            <NegButton
+              variant="outlined"
+              icon={descargandoPng ? "hourglass_top" : "image"}
+              onClick={handleExportarPng}
+              disabled={descargandoPng || !reporte}
+            >
+              {descargandoPng ? "Generando..." : "Exportar PNG"}
+            </NegButton>
+            <NegButton
+              icon={descargando ? "hourglass_top" : "download"}
+              onClick={handleExportar}
+              disabled={descargando || !reporte}
+            >
+              {descargando ? "Descargando..." : "Exportar Excel"}
+            </NegButton>
+          </div>
         }
       />
 
@@ -268,18 +302,86 @@ export default function DistribucionEtariaPage() {
               />
             </NegCard>
 
+            <div ref={chartRef}>
             <NegCard className="flex flex-col items-center">
-              <NegSectionHeader title="Participación" />
+              <NegSectionHeader
+                title="Participación"
+                hint="Hacé clic en un segmento del gráfico para ver el detalle."
+              />
               <DonutChart
                 data={donutData}
                 centerLabel="Total"
                 centerValue={formatNumber(total)}
+                onSegmentClick={(segment) =>
+                  setSelectedSegment(
+                    selectedSegment?.label === segment.label
+                      ? null
+                      : segment,
+                  )
+                }
+                selectedLabel={selectedSegment?.label}
               />
+              {selectedSegment && (
+                <div className="w-full mt-4 p-3 rounded-xl border border-neg-primary bg-neg-primary-container/30">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="w-3 h-3 rounded-full"
+                        style={{ backgroundColor: selectedSegment.color }}
+                      />
+                      <span className="font-semibold text-neg-on-surface">
+                        {selectedSegment.label}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedSegment(null)}
+                      className="text-xs text-neg-on-surface-variant hover:text-neg-primary"
+                      title="Cerrar"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">
+                        close
+                      </span>
+                    </button>
+                  </div>
+                  <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wider font-semibold text-neg-on-surface-variant">
+                        Pasajeros
+                      </p>
+                      <p className="font-headline text-xl font-bold text-neg-on-surface">
+                        {formatNumber(selectedSegment.value)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wider font-semibold text-neg-on-surface-variant">
+                        Porcentaje
+                      </p>
+                      <p className="font-headline text-xl font-bold text-neg-on-surface">
+                        {total > 0
+                          ? ((selectedSegment.value / total) * 100).toFixed(1)
+                          : "0.0"}
+                        %
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
               <div className="w-full mt-4 space-y-2 text-sm">
                 {donutData.map((d) => (
-                  <div
+                  <button
                     key={d.label}
-                    className="flex items-center justify-between"
+                    type="button"
+                    onClick={() =>
+                      setSelectedSegment(
+                        selectedSegment?.label === d.label ? null : d,
+                      )
+                    }
+                    className={`w-full flex items-center justify-between px-2 py-1 rounded-md transition-colors ${
+                      selectedSegment?.label === d.label
+                        ? "bg-neg-primary-container/40"
+                        : "hover:bg-neg-surface-container"
+                    }`}
                   >
                     <span className="inline-flex items-center gap-2">
                       <span
@@ -294,10 +396,11 @@ export default function DistribucionEtariaPage() {
                         : "0.0"}
                       %
                     </span>
-                  </div>
+                  </button>
                 ))}
               </div>
             </NegCard>
+            </div>
           </div>
 
           <NegCard>

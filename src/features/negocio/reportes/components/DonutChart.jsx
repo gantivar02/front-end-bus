@@ -13,6 +13,8 @@ export default function DonutChart({
   thickness = 22,
   centerLabel,
   centerValue,
+  onSegmentClick,
+  selectedLabel,
 }) {
   const total = data.reduce((acc, d) => acc + d.value, 0) || 1;
   const radius = (size - thickness) / 2;
@@ -44,20 +46,35 @@ export default function DonutChart({
           stroke="#e0e3e0"
           strokeWidth={thickness}
         />
-        {arcs.map((a) => (
-          <circle
-            key={a.label}
-            cx={size / 2}
-            cy={size / 2}
-            r={radius}
-            fill="none"
-            stroke={a.color}
-            strokeWidth={thickness}
-            strokeDasharray={`${a.length} ${circumference - a.length}`}
-            strokeDashoffset={-a.offset}
-            strokeLinecap="butt"
-          />
-        ))}
+        {arcs.map((a) => {
+          const isSelected = selectedLabel === a.label;
+          const interactive = typeof onSegmentClick === "function";
+          return (
+            <circle
+              key={a.label}
+              cx={size / 2}
+              cy={size / 2}
+              r={radius}
+              fill="none"
+              stroke={a.color}
+              strokeWidth={isSelected ? thickness + 6 : thickness}
+              strokeDasharray={`${a.length} ${circumference - a.length}`}
+              strokeDashoffset={-a.offset}
+              strokeLinecap="butt"
+              onClick={interactive ? () => onSegmentClick(a) : undefined}
+              style={{
+                cursor: interactive ? "pointer" : "default",
+                transition: "stroke-width 120ms ease, opacity 120ms ease",
+                opacity:
+                  selectedLabel && !isSelected ? 0.55 : 1,
+              }}
+            >
+              <title>
+                {`${a.label}: ${a.value} (${a.percent.toFixed(1)}%)`}
+              </title>
+            </circle>
+          );
+        })}
       </svg>
       {(centerLabel || centerValue) && (
         <div className="-mt-[110px] pointer-events-none text-center">

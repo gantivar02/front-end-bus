@@ -22,6 +22,7 @@ import { listBuses } from "../../_services/catalogosService";
 import {
   listarIncidentesPorBus,
   cambiarEstadoIncidente,
+  estadisticaBus,
 } from "../../_services/incidentesService";
 
 const ESTADO_TABS = [
@@ -47,6 +48,7 @@ export default function IncidentesPorBusPage() {
   const [loadingIncidentes, setLoadingIncidentes] = useState(false);
   const [error, setError] = useState(null);
   const [estadoUpdatingId, setEstadoUpdatingId] = useState(null);
+  const [stats, setStats] = useState(null);
 
   useEffect(() => {
     let alive = true;
@@ -101,6 +103,24 @@ export default function IncidentesPorBusPage() {
       alive = false;
     };
   }, [busId, estadoTab, tipoFiltro]);
+
+  useEffect(() => {
+    if (!busId) {
+      setStats(null);
+      return;
+    }
+    let alive = true;
+    estadisticaBus(Number(busId))
+      .then((data) => {
+        if (alive) setStats(data);
+      })
+      .catch(() => {
+        if (alive) setStats(null);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [busId, incidentes]);
 
   const bus = buses.find((b) => String(b.id) === busId);
 
@@ -237,6 +257,71 @@ export default function IncidentesPorBusPage() {
                 En revisión: {counts.en_revision}
               </NegChip>
               <NegChip tone="success">Resueltos: {counts.resuelto}</NegChip>
+            </div>
+          </div>
+        </NegCard>
+      )}
+
+      {bus && stats && stats.total > 0 && (
+        <NegCard className="mb-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <p className="text-xs uppercase tracking-wider font-semibold text-neg-on-surface-variant mb-2">
+                Por tipo de incidente
+              </p>
+              <div className="space-y-2">
+                {Object.entries(stats.por_tipo)
+                  .filter(([, cantidad]) => cantidad > 0)
+                  .sort((a, b) => b[1] - a[1])
+                  .map(([tipo, cantidad]) => {
+                    const pct =
+                      stats.total > 0
+                        ? Math.round((cantidad / stats.total) * 100)
+                        : 0;
+                    return (
+                      <div key={tipo}>
+                        <div className="flex items-center justify-between text-sm mb-1">
+                          <span className="text-neg-on-surface font-medium">
+                            {TIPO_INCIDENTE_LABEL[tipo] ?? tipo}
+                          </span>
+                          <span className="text-neg-on-surface-variant text-xs">
+                            {cantidad} ({pct}%)
+                          </span>
+                        </div>
+                        <div className="h-1.5 rounded-full bg-neg-surface-container-high overflow-hidden">
+                          <div
+                            className="h-full bg-neg-primary"
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
+            <div>
+              <p className="text-xs uppercase tracking-wider font-semibold text-neg-on-surface-variant mb-2">
+                Tasa de resolución
+              </p>
+              <div className="flex items-baseline gap-2">
+                <span className="text-4xl font-headline font-bold text-neg-on-surface">
+                  {Math.round((stats.tasa_resolucion ?? 0) * 100)}%
+                </span>
+                <span className="text-sm text-neg-on-surface-variant">
+                  {stats.resueltos} de {stats.total} resueltos
+                </span>
+              </div>
+              <div className="mt-3 h-2 rounded-full bg-neg-surface-container-high overflow-hidden">
+                <div
+                  className="h-full bg-neg-success"
+                  style={{
+                    width: `${Math.round((stats.tasa_resolucion ?? 0) * 100)}%`,
+                  }}
+                />
+              </div>
+              <p className="text-xs text-neg-on-surface-variant mt-3">
+                Indicador clave para evaluar la atención de incidentes del bus.
+              </p>
             </div>
           </div>
         </NegCard>
