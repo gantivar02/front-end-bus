@@ -5,6 +5,7 @@ import {
   NegButton,
   NegFilterBar,
   NegInput,
+  NegSelect,
   NegKpiCard,
   NegSectionHeader,
   NegSegmentedControl,
@@ -13,6 +14,7 @@ import {
 import LineAreaChart from "../components/LineAreaChart";
 import ColumnChart from "../components/ColumnChart";
 import { tendenciaMensual } from "../../_services/incidentesService";
+import { listEmpresas } from "../../_services/catalogosService";
 import {
   TIPOS_INCIDENTE,
   TIPO_INCIDENTE_LABEL,
@@ -51,10 +53,27 @@ function restarMeses(ym, meses) {
 export default function TendenciaIncidentesPage() {
   const [meses, setMeses] = useState(6);
   const [hasta, setHasta] = useState("");
+  const [empresaId, setEmpresaId] = useState("");
+  const [empresas, setEmpresas] = useState([]);
   const [tipoFiltro, setTipoFiltro] = useState("todos");
   const [reporte, setReporte] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  useEffect(() => {
+    let alive = true;
+    listEmpresas()
+      .then((data) => {
+        if (!alive) return;
+        setEmpresas(Array.isArray(data) ? data : []);
+      })
+      .catch(() => {
+        // si no se pueden cargar empresas, el filtro queda vacío
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   useEffect(() => {
     let alive = true;
@@ -72,6 +91,7 @@ export default function TendenciaIncidentesPage() {
       params.hasta = hastaCalc;
       params.desde = restarMeses(hastaCalc, meses - 1);
     }
+    if (empresaId) params.empresa_id = Number(empresaId);
     tendenciaMensual(params)
       .then((data) => {
         if (alive) setReporte(data);
@@ -90,7 +110,15 @@ export default function TendenciaIncidentesPage() {
     return () => {
       alive = false;
     };
-  }, [meses, hasta]);
+  }, [meses, hasta, empresaId]);
+
+  const empresaSeleccionada = useMemo(
+    () =>
+      empresaId
+        ? empresas.find((e) => String(e.id) === String(empresaId)) ?? null
+        : null,
+    [empresas, empresaId],
+  );
 
   const labels = useMemo(() => {
     if (!reporte?.series?.[0]?.datos) return [];
@@ -164,7 +192,11 @@ export default function TendenciaIncidentesPage() {
       <NegPageHeader
         eyebrow="HU 2-016"
         title="Tendencia mensual de incidentes"
-        subtitle="Evolución de los incidentes reportados por tipo y mes."
+        subtitle={
+          empresaSeleccionada
+            ? `Evolución de incidentes para "${empresaSeleccionada.nombre}".`
+            : "Evolución consolidada de todas las empresas por tipo y mes."
+        }
       />
 
       <NegFilterBar className="mb-5">
@@ -182,6 +214,19 @@ export default function TendenciaIncidentesPage() {
           value={hasta}
           onChange={(e) => setHasta(e.target.value)}
           placeholder="2026-04"
+        />
+        <NegSelect
+          label="Empresa"
+          name="empresa"
+          value={empresaId}
+          onChange={(e) => setEmpresaId(e.target.value)}
+          options={[
+            { value: "", label: "Todas las empresas (consolidado)" },
+            ...empresas.map((empresa) => ({
+              value: empresa.id,
+              label: empresa.nombre ?? `Empresa #${empresa.id}`,
+            })),
+          ]}
         />
       </NegFilterBar>
 

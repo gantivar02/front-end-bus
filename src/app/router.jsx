@@ -35,8 +35,11 @@ import ParaderosCercanosPage from "../features/negocio/paraderos/pages/Paraderos
 import AbordajePage from "../features/negocio/boletos/pages/AbordajePage";
 import DescensoPage from "../features/negocio/boletos/pages/DescensoPage";
 import HistorialViajesPage from "../features/negocio/boletos/pages/HistorialViajesPage";
+import MisBoletosPage from "../features/negocio/boletos/pages/MisBoletosPage";
 import InicioTurnoPage from "../features/negocio/turnos/pages/InicioTurnoPage";
 import TurnosPage from "../features/negocio/turnos/pages/TurnosPage";
+import AsignacionesPage from "../features/negocio/asignaciones/pages/AsignacionesPage";
+import ConductoresPage from "../features/negocio/conductores/pages/ConductoresPage";
 import ProgramacionesPage from "../features/negocio/programaciones/pages/ProgramacionesPage";
 import BusesPage from "../features/negocio/buses/pages/BusesPage";
 import DashboardPage from "../features/dashboard/pages/DashboardPage";
@@ -129,6 +132,14 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        path: "boletos/mios",
+        element: (
+          <RoleRoute allow={[ROL_CIUDADANO]}>
+            <MisBoletosPage />
+          </RoleRoute>
+        ),
+      },
+      {
         path: "turnos/inicio",
         element: (
           <RoleRoute allow={[ROL_CONDUCTOR]}>
@@ -141,6 +152,22 @@ export const router = createBrowserRouter([
         element: (
           <RoleRoute allow={ROLES_ADMIN}>
             <TurnosPage />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: "asignaciones",
+        element: (
+          <RoleRoute allow={ROLES_ADMIN}>
+            <AsignacionesPage />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: "conductores",
+        element: (
+          <RoleRoute allow={ROLES_ADMIN}>
+            <ConductoresPage />
           </RoleRoute>
         ),
       },

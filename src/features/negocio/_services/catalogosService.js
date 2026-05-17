@@ -10,6 +10,11 @@ export async function getBus(id) {
   return data;
 }
 
+export async function getDisponibilidadBus(id) {
+  const { data } = await negocioApi.get(`/boletos/bus/${id}/disponibilidad`);
+  return data;
+}
+
 export async function listConductores() {
   const { data } = await negocioApi.get("/conductores");
   return data;
@@ -35,6 +40,11 @@ export async function listRutas() {
   return data;
 }
 
+export async function listEmpresas() {
+  const { data } = await negocioApi.get("/empresas");
+  return data;
+}
+
 export async function listMetodosPago() {
   const { data } = await negocioApi.get("/metodos-pago");
   return data;
@@ -47,6 +57,14 @@ export async function listMetodosPagoCiudadano() {
 
 export async function listMisMetodosPagoCiudadano() {
   const { data } = await negocioApi.get("/metodos-pago-ciudadano/mis-metodos");
+  return data;
+}
+
+export async function registrarMiMetodoPago(payload) {
+  const { data } = await negocioApi.post(
+    "/metodos-pago-ciudadano/mis-metodos",
+    payload,
+  );
   return data;
 }
 

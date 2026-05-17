@@ -2,7 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import NegPageHeader from "../../../../components/negocio/NegPageHeader";
 import NegCard from "../../../../components/negocio/NegCard";
 import NegSelect from "../../../../components/negocio/NegSelect";
-import { listBuses } from "../../_services/catalogosService";
+import {
+  listBuses,
+  getDisponibilidadBus,
+} from "../../_services/catalogosService";
 import { listParaderos } from "../../paraderos/paraderosService";
 import { registrarDescenso } from "../boletosService";
 import { formatDateTime } from "../../_utils/format";
@@ -25,6 +28,10 @@ export default function DescensoPage() {
     bus_id: "",
     paradero_id: "",
   });
+  const [paraderosRuta, setParaderosRuta] = useState(null);
+  const [rutaInfo, setRutaInfo] = useState(null);
+  const [loadingRuta, setLoadingRuta] = useState(false);
+  const [rutaError, setRutaError] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -55,6 +62,50 @@ export default function DescensoPage() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!form.bus_id) {
+      setParaderosRuta(null);
+      setRutaInfo(null);
+      setRutaError("");
+      setLoadingRuta(false);
+      return;
+    }
+
+    let active = true;
+    setLoadingRuta(true);
+    setRutaError("");
+
+    (async () => {
+      try {
+        const data = await getDisponibilidadBus(form.bus_id);
+        if (!active) return;
+        const paraderos_ruta = Array.isArray(data?.paraderos_ruta)
+          ? data.paraderos_ruta
+          : [];
+        setParaderosRuta(paraderos_ruta);
+        setRutaInfo(data?.programacion_activa?.ruta ?? null);
+        setForm((current) => {
+          if (!current.paradero_id) return current;
+          const sigueValido = paraderos_ruta.some(
+            (paradero) => String(paradero.id) === String(current.paradero_id),
+          );
+          return sigueValido ? current : { ...current, paradero_id: "" };
+        });
+      } catch (error) {
+        if (!active) return;
+        setParaderosRuta(null);
+        setRutaInfo(null);
+        setRutaError(getErrorMessage(error));
+      } finally {
+        if (active) setLoadingRuta(false);
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [form.bus_id]);
+
   const busOptions = useMemo(
     () =>
       buses.map((bus) => ({
@@ -64,14 +115,18 @@ export default function DescensoPage() {
     [buses],
   );
 
-  const paraderoOptions = useMemo(
-    () =>
-      paraderos.map((paradero) => ({
+  const paraderoOptions = useMemo(() => {
+    if (Array.isArray(paraderosRuta) && paraderosRuta.length > 0) {
+      return paraderosRuta.map((paradero) => ({
         value: String(paradero.id),
         label: `${paradero.nombre} · ${paradero.tipo ?? "paradero"}`,
-      })),
-    [paraderos],
-  );
+      }));
+    }
+    return paraderos.map((paradero) => ({
+      value: String(paradero.id),
+      label: `${paradero.nombre} · ${paradero.tipo ?? "paradero"}`,
+    }));
+  }, [paraderos, paraderosRuta]);
 
   const busSeleccionado = useMemo(
     () => buses.find((bus) => String(bus.id) === String(form.bus_id)) ?? null,
@@ -173,9 +228,28 @@ export default function DescensoPage() {
                   value={form.paradero_id}
                   onChange={handleChange("paradero_id")}
                   options={paraderoOptions}
-                  placeholder="Selecciona un paradero"
+                  placeholder={
+                    form.bus_id && loadingRuta
+                      ? "Cargando paraderos de la ruta..."
+                      : "Selecciona un paradero"
+                  }
+                  disabled={!form.bus_id || loadingRuta}
                 />
               </div>
+
+              {form.bus_id && !loadingRuta && !rutaError && (
+                <div className="rounded-xl bg-neg-surface-container px-4 py-3 text-xs text-neg-on-surface-variant">
+                  {rutaInfo?.nombre
+                    ? `Mostrando solo los paraderos de la ruta "${rutaInfo.nombre}" que estás recorriendo.`
+                    : "Este bus no tiene una programación activa. Se muestran todos los paraderos disponibles."}
+                </div>
+              )}
+
+              {rutaError && (
+                <div className="rounded-xl border border-neg-error/40 bg-neg-error-container/40 px-4 py-3 text-xs text-neg-on-error-container">
+                  No se pudo cargar la ruta del bus. {rutaError}
+                </div>
+              )}
 
               {submitError && (
                 <div className="rounded-2xl border border-neg-error/40 bg-neg-error-container/40 px-4 py-3 text-sm text-neg-on-error-container">

@@ -68,6 +68,12 @@ const navGroups = [
         roles: [ROL_CIUDADANO],
       },
       {
+        to: "/negocio/boletos/mios",
+        icon: "confirmation_number",
+        label: "Mis boletos",
+        roles: [ROL_CIUDADANO],
+      },
+      {
         to: "/negocio/boletos/historial",
         icon: "history",
         label: "Historial de viajes",
@@ -82,6 +88,18 @@ const navGroups = [
         to: "/negocio/turnos",
         icon: "calendar_month",
         label: "Gestionar turnos",
+        roles: ROLES_ADMIN,
+      },
+      {
+        to: "/negocio/conductores",
+        icon: "badge",
+        label: "Gestión conductores",
+        roles: ROLES_ADMIN,
+      },
+      {
+        to: "/negocio/asignaciones",
+        icon: "link",
+        label: "Asignar buses",
         roles: ROLES_ADMIN,
       },
       {
