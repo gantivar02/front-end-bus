@@ -156,7 +156,7 @@ export default function RutaForm({
       {/* Información básica */}
       <NegCard>
         <NegSectionHeader title="Información de la ruta" />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-4">
           <NegInput
             label="Nombre de la ruta *"
             name="nombre"
@@ -164,27 +164,29 @@ export default function RutaForm({
             onChange={(e) => setField("nombre", e.target.value)}
             placeholder="Ej. Ruta Centro-Norte"
             required
-            className="md:col-span-2"
           />
-          <NegInput
-            label="Tarifa (COP) *"
-            name="tarifa"
-            type="number"
-            min="0"
-            step="100"
-            value={info.tarifa}
-            onChange={(e) => setField("tarifa", e.target.value)}
-            placeholder="2500"
-            iconStart="payments"
-            required
-          />
-          <NegInput
-            label="Descripción"
-            name="descripcion"
-            value={info.descripcion}
-            onChange={(e) => setField("descripcion", e.target.value)}
-            placeholder="Describe el recorrido de la ruta"
-          />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <NegInput
+              label="Tarifa (COP) *"
+              name="tarifa"
+              type="number"
+              min="0"
+              step="100"
+              value={info.tarifa}
+              onChange={(e) => setField("tarifa", e.target.value)}
+              placeholder="2500"
+              iconStart="payments"
+              required
+            />
+            <NegInput
+              label="Descripción"
+              name="descripcion"
+              value={info.descripcion}
+              onChange={(e) => setField("descripcion", e.target.value)}
+              placeholder="Describe el recorrido de la ruta"
+              className="md:col-span-2"
+            />
+          </div>
         </div>
       </NegCard>
 
@@ -197,7 +199,7 @@ export default function RutaForm({
               hint={`${lista.length} agregado${lista.length !== 1 ? "s" : ""} · mínimo 3 requeridos`}
             />
 
-            <div className="grid grid-cols-1 md:grid-cols-[1fr_130px_130px_auto] gap-3 items-end mb-4">
+            <div className="space-y-3 mb-4">
               <NegSelect
                 label="Paradero"
                 name="paradero_id"
@@ -214,43 +216,45 @@ export default function RutaForm({
                   label: p.nombre,
                 }))}
               />
-              <NegInput
-                label="Distancia (km)"
-                name="distancia_desde_anterior"
-                type="number"
-                min="0"
-                step="0.1"
-                value={adding.distancia_desde_anterior}
-                onChange={(e) =>
-                  setAddField("distancia_desde_anterior", e.target.value)
-                }
-                placeholder="1.5"
-                hint={lista.length === 0 ? "No aplica" : ""}
-              />
-              <NegInput
-                label="Tiempo (min) *"
-                name="tiempo_estimado_min"
-                type="number"
-                min="0"
-                value={adding.tiempo_estimado_min}
-                onChange={(e) =>
-                  setAddField("tiempo_estimado_min", e.target.value)
-                }
-                placeholder="5"
-              />
-              <NegButton
-                type="button"
-                variant="tonal"
-                icon="add"
-                onClick={handleAddParadero}
-                disabled={
-                  !adding.paradero_id ||
-                  adding.tiempo_estimado_min === "" ||
-                  availableParaderos.length === 0
-                }
-              >
-                Agregar
-              </NegButton>
+              <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-3 items-end">
+                <NegInput
+                  label="Distancia (km)"
+                  name="distancia_desde_anterior"
+                  type="number"
+                  min="0"
+                  step="0.1"
+                  value={adding.distancia_desde_anterior}
+                  onChange={(e) =>
+                    setAddField("distancia_desde_anterior", e.target.value)
+                  }
+                  placeholder={lista.length === 0 ? "No aplica" : "1.5"}
+                  disabled={lista.length === 0}
+                />
+                <NegInput
+                  label="Tiempo (min) *"
+                  name="tiempo_estimado_min"
+                  type="number"
+                  min="0"
+                  value={adding.tiempo_estimado_min}
+                  onChange={(e) =>
+                    setAddField("tiempo_estimado_min", e.target.value)
+                  }
+                  placeholder="5"
+                />
+                <NegButton
+                  type="button"
+                  variant="tonal"
+                  icon="add"
+                  onClick={handleAddParadero}
+                  disabled={
+                    !adding.paradero_id ||
+                    adding.tiempo_estimado_min === "" ||
+                    availableParaderos.length === 0
+                  }
+                >
+                  Agregar
+                </NegButton>
+              </div>
             </div>
 
             {addError && (

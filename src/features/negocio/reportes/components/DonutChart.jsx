@@ -36,8 +36,15 @@ export default function DonutChart({
   });
 
   return (
-    <div className="flex flex-col items-center">
-      <svg width={size} height={size} className="-rotate-90">
+    <div
+      className="relative flex items-center justify-center"
+      style={{ width: size, height: size }}
+    >
+      <svg
+        width={size}
+        height={size}
+        className="-rotate-90 block"
+      >
         <circle
           cx={size / 2}
           cy={size / 2}
@@ -77,7 +84,7 @@ export default function DonutChart({
         })}
       </svg>
       {(centerLabel || centerValue) && (
-        <div className="-mt-[110px] pointer-events-none text-center">
+        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
           {centerValue && (
             <p className="font-headline text-2xl font-bold text-neg-on-surface">
               {centerValue}

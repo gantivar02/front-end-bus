@@ -3,7 +3,11 @@ import NegPageHeader from "../../../../components/negocio/NegPageHeader";
 import NegCard from "../../../../components/negocio/NegCard";
 import NegSelect from "../../../../components/negocio/NegSelect";
 import MetodoPagoSelector from "../../recargas/components/MetodoPagoSelector";
-import { listBuses, listMisMetodosPagoCiudadano } from "../../_services/catalogosService";
+import {
+  listBuses,
+  listMisMetodosPagoCiudadano,
+  getDisponibilidadBus,
+} from "../../_services/catalogosService";
 import { listParaderos } from "../../paraderos/paraderosService";
 import { abordarBus } from "../boletosService";
 import { formatCurrency, formatDateTime } from "../../_utils/format";
@@ -28,6 +32,38 @@ export default function AbordajePage() {
     paradero_id: "",
     metodo_pago_ciudadano_id: "",
   });
+
+  const [disponibilidad, setDisponibilidad] = useState(null);
+  const [loadingDisp, setLoadingDisp] = useState(false);
+  const [dispError, setDispError] = useState("");
+
+  // Consulta disponibilidad cada vez que cambia el bus
+  useEffect(() => {
+    if (!form.bus_id) {
+      setDisponibilidad(null);
+      setDispError("");
+      return;
+    }
+    let alive = true;
+    setLoadingDisp(true);
+    setDispError("");
+    getDisponibilidadBus(Number(form.bus_id))
+      .then((data) => {
+        if (alive) setDisponibilidad(data);
+      })
+      .catch((err) => {
+        if (alive) {
+          setDisponibilidad(null);
+          setDispError(getErrorMessage(err));
+        }
+      })
+      .finally(() => {
+        if (alive) setLoadingDisp(false);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [form.bus_id]);
 
   useEffect(() => {
     let active = true;
@@ -98,8 +134,15 @@ export default function AbordajePage() {
     [paraderos, form.paradero_id],
   );
 
+  // Si ya cargamos disponibilidad y el bus está lleno, bloqueamos el submit.
+  // (Si todavía está cargando, dejamos pasar — el backend valida de nuevo.)
+  const busLleno = disponibilidad && !disponibilidad.puede_abordar;
   const canSubmit =
-    form.bus_id && form.paradero_id && form.metodo_pago_ciudadano_id && !submitting;
+    form.bus_id &&
+    form.paradero_id &&
+    form.metodo_pago_ciudadano_id &&
+    !submitting &&
+    !busLleno;
 
   const handleChange = (field) => (eventOrValue) => {
     const value =
@@ -206,6 +249,14 @@ export default function AbordajePage() {
                   placeholder="Selecciona un paradero"
                 />
               </div>
+
+              {form.bus_id && (
+                <DisponibilidadBus
+                  disponibilidad={disponibilidad}
+                  loading={loadingDisp}
+                  error={dispError}
+                />
+              )}
 
               <div className="space-y-3">
                 <div>
@@ -368,5 +419,130 @@ export default function AbordajePage() {
         </div>
       </div>
     </section>
+  );
+}
+
+function DisponibilidadBus({ disponibilidad, loading, error }) {
+  if (loading) {
+    return (
+      <div className="rounded-2xl border border-neg-outline-variant/50 bg-neg-surface-container-low px-4 py-3 text-sm text-neg-on-surface-variant">
+        Consultando disponibilidad del bus...
+      </div>
+    );
+  }
+  if (error) {
+    return (
+      <div className="rounded-2xl border border-neg-error/40 bg-neg-error-container/40 px-4 py-3 text-sm text-neg-on-error-container">
+        {error}
+      </div>
+    );
+  }
+  if (!disponibilidad) return null;
+
+  const { bus, programacion_activa, ocupacion, disponibilidad: disp, puede_abordar, motivo } =
+    disponibilidad;
+
+  const okStyle = puede_abordar
+    ? "border-emerald-300 bg-emerald-50/70"
+    : "border-rose-300 bg-rose-50/70";
+  const okBadge = puede_abordar
+    ? "bg-emerald-600 text-white"
+    : "bg-rose-600 text-white";
+
+  // Barra de ocupación visual
+  const pctOcupado =
+    bus.capacidad_maxima > 0
+      ? Math.min(100, Math.round((ocupacion.total / bus.capacidad_maxima) * 100))
+      : 0;
+
+  return (
+    <div className={`rounded-2xl border ${okStyle} p-4`}>
+      <div className="flex items-start justify-between gap-3 mb-3">
+        <div>
+          <p className="text-xs uppercase tracking-widest text-neg-on-surface-variant">
+            Disponibilidad del bus
+          </p>
+          <p className="font-semibold text-neg-on-surface mt-0.5">
+            {bus.placa} · {bus.modelo}
+          </p>
+          {programacion_activa && (
+            <p className="text-xs text-neg-on-surface-variant mt-1">
+              Ruta activa: <strong>{programacion_activa.ruta.nombre}</strong>
+            </p>
+          )}
+        </div>
+        <span
+          className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full ${okBadge}`}
+        >
+          <span className="material-symbols-outlined text-[14px]">
+            {puede_abordar ? "check_circle" : "block"}
+          </span>
+          {puede_abordar ? "Puede abordar" : "No puede abordar"}
+        </span>
+      </div>
+
+      {!puede_abordar && motivo && (
+        <p className="text-sm text-rose-900 mb-3">{motivo}</p>
+      )}
+
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3 text-sm">
+        <div className="rounded-xl bg-white/70 p-3">
+          <p className="text-[10px] uppercase tracking-wider font-semibold text-neg-on-surface-variant">
+            A bordo
+          </p>
+          <p className="font-headline text-xl font-bold text-neg-on-surface">
+            {ocupacion.total}
+            <span className="text-sm font-medium text-neg-on-surface-variant ml-1">
+              / {bus.capacidad_maxima}
+            </span>
+          </p>
+        </div>
+        <div className="rounded-xl bg-white/70 p-3">
+          <p className="text-[10px] uppercase tracking-wider font-semibold text-neg-on-surface-variant">
+            Sentados
+          </p>
+          <p className="font-headline text-xl font-bold text-neg-on-surface">
+            {ocupacion.sentados}
+            <span className="text-sm font-medium text-neg-on-surface-variant ml-1">
+              / {bus.capacidad_sentados}
+            </span>
+          </p>
+        </div>
+        <div className="rounded-xl bg-white/70 p-3">
+          <p className="text-[10px] uppercase tracking-wider font-semibold text-neg-on-surface-variant">
+            Parados
+          </p>
+          <p className="font-headline text-xl font-bold text-neg-on-surface">
+            {ocupacion.parados}
+            <span className="text-sm font-medium text-neg-on-surface-variant ml-1">
+              / {bus.capacidad_parados}
+            </span>
+          </p>
+        </div>
+        <div className="rounded-xl bg-white/70 p-3">
+          <p className="text-[10px] uppercase tracking-wider font-semibold text-neg-on-surface-variant">
+            Disponibles
+          </p>
+          <p className="font-headline text-xl font-bold text-neg-on-surface">
+            {disp.total}
+          </p>
+          <p className="text-[10px] text-neg-on-surface-variant mt-0.5">
+            {disp.sentados} sent · {disp.parados} par
+          </p>
+        </div>
+      </div>
+
+      <div>
+        <div className="h-2 rounded-full bg-white/80 overflow-hidden">
+          <div
+            className={`h-full ${puede_abordar ? "bg-emerald-600" : "bg-rose-600"}`}
+            style={{ width: `${pctOcupado}%` }}
+          />
+        </div>
+        <p className="text-[11px] text-neg-on-surface-variant mt-1">
+          {pctOcupado}% de ocupación
+        </p>
+      </div>
+    </div>
   );
 }

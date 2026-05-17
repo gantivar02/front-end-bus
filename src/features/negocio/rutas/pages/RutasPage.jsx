@@ -480,7 +480,7 @@ export default function RutasPage() {
 
       {/* Panel lateral — formulario */}
       {isAdmin && showForm && (
-        <div className="fixed inset-0 z-40 flex">
+        <div className="fixed inset-0 z-[1100] flex">
           <div
             className="absolute inset-0 bg-black/40 backdrop-blur-sm"
             onClick={closeForm}
@@ -530,7 +530,7 @@ export default function RutasPage() {
 
       {/* Modal confirmación eliminación */}
       {isAdmin && deleteTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+        <div className="fixed inset-0 z-[1100] flex items-center justify-center px-4">
           <div
             className="absolute inset-0 bg-black/50 backdrop-blur-sm"
             onClick={() => !deleting && setDeleteTarget(null)}

@@ -4,16 +4,24 @@ import {
   NegCard,
   NegButton,
   NegInput,
+  NegSelect,
   NegSectionHeader,
   NegChip,
   NegStatusBadge,
+  NegEmptyState,
 } from "../../../../components/negocio";
 import SaldoCard from "../components/SaldoCard";
 import MontoSelector from "../components/MontoSelector";
 import MetodoPagoSelector from "../components/MetodoPagoSelector";
 import { MONTOS_PREDEFINIDOS } from "../../_mocks/catalogos";
 import { formatCurrency } from "../../_utils/format";
-import { listMetodosPagoCiudadano } from "../../_services/catalogosService";
+import {
+  listMetodosPagoCiudadano,
+  listMisMetodosPagoCiudadano,
+  listMetodosPago,
+  registrarMiMetodoPago,
+} from "../../_services/catalogosService";
+import { useAuth } from "../../../../context/AuthContext";
 import {
   previewRecarga,
   iniciarRecarga,
@@ -42,7 +50,11 @@ function nombreCiudadano(mpc) {
 }
 
 export default function RecargarTarjetaPage() {
-  const [step, setStep] = useState(0);
+  const { isCiudadano, isAdmin } = useAuth();
+  // Si es ciudadano puro (no admin), arrancamos directo en el paso de monto
+  // porque su tarjeta se autoselecciona.
+  const soloCiudadano = isCiudadano && !isAdmin;
+  const [step, setStep] = useState(soloCiudadano ? 1 : 0);
   const [metodos, setMetodos] = useState([]);
   const [loadingMetodos, setLoadingMetodos] = useState(true);
   const [busqueda, setBusqueda] = useState("");
@@ -57,12 +69,34 @@ export default function RecargarTarjetaPage() {
   const [error, setError] = useState(null);
   const pollRef = useRef(null);
 
+  // Estado para "Registrar nuevo método de pago" (solo ciudadano)
+  const [showRegistrar, setShowRegistrar] = useState(false);
+  const [catalogoMetodos, setCatalogoMetodos] = useState([]);
+  const [loadingCatalogo, setLoadingCatalogo] = useState(false);
+  const [formMetodo, setFormMetodo] = useState({
+    metodo_pago_id: "",
+    referencia_externa: "",
+  });
+  const [registrando, setRegistrando] = useState(false);
+  const [registrarError, setRegistrarError] = useState(null);
+
   useEffect(() => {
     let alive = true;
-    listMetodosPagoCiudadano()
+    // Ciudadano puro: usa el endpoint /mis-metodos (solo sus tarjetas).
+    // Admin: usa el endpoint completo (puede recargar la tarjeta de cualquier ciudadano).
+    const fetcher = soloCiudadano
+      ? listMisMetodosPagoCiudadano
+      : listMetodosPagoCiudadano;
+    fetcher()
       .then((data) => {
         if (!alive) return;
-        setMetodos(Array.isArray(data) ? data : []);
+        const lista = Array.isArray(data) ? data : [];
+        setMetodos(lista);
+        // Para ciudadano: autoseleccionar la primera tarjeta activa
+        if (soloCiudadano) {
+          const activa = lista.find((m) => m.activo) ?? lista[0];
+          if (activa) setMpcId(activa.id);
+        }
       })
       .catch((err) => {
         if (!alive) return;
@@ -77,7 +111,7 @@ export default function RecargarTarjetaPage() {
     return () => {
       alive = false;
     };
-  }, []);
+  }, [soloCiudadano]);
 
   const metodosFiltrados = useMemo(() => {
     const term = busqueda.trim().toLowerCase();
@@ -205,8 +239,10 @@ export default function RecargarTarjetaPage() {
 
   const reset = () => {
     stopPolling();
-    setStep(0);
-    setMpcId(null);
+    setStep(soloCiudadano ? 1 : 0);
+    // Para ciudadano: mantener el mpc autoseleccionado (su tarjeta).
+    // Para admin: reiniciar la selección de titular.
+    if (!soloCiudadano) setMpcId(null);
     setBusqueda("");
     setMonto(null);
     setMontoCustom("");
@@ -215,6 +251,52 @@ export default function RecargarTarjetaPage() {
     setPreviewError(null);
     setRecarga(null);
     setError(null);
+  };
+
+  const abrirModalRegistrar = async () => {
+    setShowRegistrar(true);
+    setFormMetodo({ metodo_pago_id: "", referencia_externa: "" });
+    setRegistrarError(null);
+    if (catalogoMetodos.length === 0) {
+      setLoadingCatalogo(true);
+      try {
+        const data = await listMetodosPago();
+        setCatalogoMetodos(Array.isArray(data) ? data : []);
+      } catch (err) {
+        setRegistrarError(
+          err?.response?.data?.message ??
+            "No se pudo cargar el catálogo de métodos.",
+        );
+      } finally {
+        setLoadingCatalogo(false);
+      }
+    }
+  };
+
+  const handleRegistrarMetodo = async (e) => {
+    e.preventDefault();
+    if (!formMetodo.metodo_pago_id || registrando) return;
+    setRegistrando(true);
+    setRegistrarError(null);
+    try {
+      const nuevo = await registrarMiMetodoPago({
+        metodo_pago_id: Number(formMetodo.metodo_pago_id),
+        referencia_externa: formMetodo.referencia_externa.trim() || undefined,
+      });
+      // Recargar lista y autoseleccionar el método recién creado
+      const data = await listMisMetodosPagoCiudadano();
+      const lista = Array.isArray(data) ? data : [];
+      setMetodos(lista);
+      setMpcId(nuevo.id);
+      setShowRegistrar(false);
+    } catch (err) {
+      setRegistrarError(
+        err?.response?.data?.message ??
+          "No se pudo registrar el método. ¿Tal vez ya tenés uno de ese tipo?",
+      );
+    } finally {
+      setRegistrando(false);
+    }
   };
 
   const canContinueFromTitular = mpcId != null;
@@ -226,10 +308,14 @@ export default function RecargarTarjetaPage() {
       <NegPageHeader
         eyebrow="HU 2-013"
         title="Recargar tarjeta"
-        subtitle="Recarga con ePayco en 4 pasos: titular, monto, método y confirmación."
+        subtitle={
+          soloCiudadano
+            ? "Recarga con ePayco en 3 pasos: monto, método y confirmación."
+            : "Recarga con ePayco en 4 pasos: titular, monto, método y confirmación."
+        }
       />
 
-      <Stepper step={step} />
+      <Stepper step={step} hideTitular={soloCiudadano} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mt-6">
         <div className="lg:col-span-2 space-y-5">
@@ -244,7 +330,7 @@ export default function RecargarTarjetaPage() {
             </NegCard>
           )}
 
-          {step === 0 && (
+          {step === 0 && !soloCiudadano && (
             <NegCard>
               <NegSectionHeader
                 title="Elegí el titular"
@@ -280,6 +366,81 @@ export default function RecargarTarjetaPage() {
                   Continuar
                 </NegButton>
               </div>
+            </NegCard>
+          )}
+
+          {soloCiudadano && step === 1 && (
+            <NegCard>
+              <NegSectionHeader
+                title="Mis métodos de pago"
+                hint="Elegí con cuál de tus tarjetas vas a hacer esta recarga."
+                actions={
+                  <NegButton
+                    variant="outlined"
+                    icon="add_card"
+                    onClick={abrirModalRegistrar}
+                  >
+                    Registrar nuevo
+                  </NegButton>
+                }
+              />
+              {loadingMetodos ? (
+                <p className="text-sm text-neg-on-surface-variant">
+                  Cargando tus métodos de pago...
+                </p>
+              ) : metodos.length === 0 ? (
+                <NegEmptyState
+                  icon="credit_card_off"
+                  title="No tenés métodos de pago"
+                  description="Registrá uno con el botón de arriba para poder recargar tu tarjeta."
+                />
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {metodos.map((m) => {
+                    const seleccionado = mpcId === m.id;
+                    return (
+                      <button
+                        key={m.id}
+                        type="button"
+                        onClick={() => setMpcId(m.id)}
+                        className={`text-left p-4 rounded-2xl border transition-colors ${
+                          seleccionado
+                            ? "border-neg-primary bg-neg-primary-container/30"
+                            : "border-neg-outline-variant hover:border-neg-outline bg-neg-surface-container-lowest"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="material-symbols-outlined text-neg-primary text-[20px]">
+                            credit_card
+                          </span>
+                          <span className="font-semibold text-neg-on-surface capitalize">
+                            {(m.metodoPago?.tipo ?? "Método").replaceAll(
+                              "_",
+                              " ",
+                            )}
+                          </span>
+                          {seleccionado && (
+                            <span className="ml-auto material-symbols-outlined text-neg-primary">
+                              check_circle
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-neg-on-surface-variant">
+                          Saldo actual
+                        </p>
+                        <p className="font-headline text-lg font-bold text-neg-on-surface">
+                          {formatCurrency(Number(m.saldo_actual ?? 0))}
+                        </p>
+                        {m.referencia_externa && (
+                          <p className="text-[10px] font-mono text-neg-on-surface-variant mt-1">
+                            {m.referencia_externa}
+                          </p>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </NegCard>
           )}
 
@@ -325,9 +486,13 @@ export default function RecargarTarjetaPage() {
                 <p className="mt-3 text-sm text-neg-error">{previewError}</p>
               )}
               <div className="flex justify-between mt-5">
-                <NegButton variant="outlined" onClick={() => setStep(0)}>
-                  Atrás
-                </NegButton>
+                {soloCiudadano ? (
+                  <span />
+                ) : (
+                  <NegButton variant="outlined" onClick={() => setStep(0)}>
+                    Atrás
+                  </NegButton>
+                )}
                 <NegButton
                   iconEnd="arrow_forward"
                   disabled={!canContinueFromMonto}
@@ -532,16 +697,106 @@ export default function RecargarTarjetaPage() {
           </NegCard>
         </aside>
       </div>
+
+      {showRegistrar && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => !registrando && setShowRegistrar(false)}
+          />
+          <NegCard
+            variant="elevated"
+            padding="lg"
+            className="relative z-10 w-full max-w-md"
+          >
+            <h2 className="font-headline text-xl font-bold text-neg-on-surface mb-1">
+              Registrar nuevo método de pago
+            </h2>
+            <p className="text-sm text-neg-on-surface-variant mb-5">
+              Vinculá un método a tu cuenta para usarlo en tus recargas. Empieza
+              con saldo $0 y se carga vía ePayco.
+            </p>
+
+            <form onSubmit={handleRegistrarMetodo} className="space-y-4">
+              <NegSelect
+                label="Tipo de método *"
+                name="metodo_pago_id"
+                value={formMetodo.metodo_pago_id}
+                onChange={(e) =>
+                  setFormMetodo((f) => ({
+                    ...f,
+                    metodo_pago_id: e.target.value,
+                  }))
+                }
+                placeholder={
+                  loadingCatalogo
+                    ? "Cargando catálogo..."
+                    : "Seleccioná un método"
+                }
+                disabled={loadingCatalogo}
+                options={catalogoMetodos.map((mp) => ({
+                  value: mp.id,
+                  label: `${mp.tipo.replaceAll("_", " ")}${mp.descripcion ? ` · ${mp.descripcion}` : ""}`,
+                }))}
+              />
+              <NegInput
+                label="Referencia externa (opcional)"
+                name="referencia_externa"
+                value={formMetodo.referencia_externa}
+                onChange={(e) =>
+                  setFormMetodo((f) => ({
+                    ...f,
+                    referencia_externa: e.target.value,
+                  }))
+                }
+                placeholder="Ej. últimos 4 dígitos, alias, etc."
+                iconStart="tag"
+                hint="Solo para identificarla. No guardamos datos sensibles."
+              />
+
+              {registrarError && (
+                <div className="px-3 py-2 rounded-lg border border-neg-error bg-neg-error-container/30 text-sm text-neg-error">
+                  {registrarError}
+                </div>
+              )}
+
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <NegButton
+                  type="button"
+                  variant="outlined"
+                  onClick={() => setShowRegistrar(false)}
+                  disabled={registrando}
+                >
+                  Cancelar
+                </NegButton>
+                <NegButton
+                  type="submit"
+                  icon={registrando ? "hourglass_top" : "add_card"}
+                  disabled={!formMetodo.metodo_pago_id || registrando}
+                >
+                  {registrando ? "Registrando..." : "Registrar"}
+                </NegButton>
+              </div>
+            </form>
+          </NegCard>
+        </div>
+      )}
     </div>
   );
 }
 
-function Stepper({ step }) {
+function Stepper({ step, hideTitular = false }) {
+  // Cuando el usuario es ciudadano, ocultamos el paso "Titular" (es él mismo).
+  // Los índices internos siguen siendo los mismos (0=Titular, 1=Monto, ...).
+  const visibleSteps = hideTitular ? STEPS.slice(1) : STEPS;
+  const baseOffset = hideTitular ? 1 : 0;
   return (
     <div className="flex items-center gap-2 overflow-x-auto">
-      {STEPS.map((s, idx) => {
+      {visibleSteps.map((s, visibleIdx) => {
+        const idx = visibleIdx + baseOffset;
         const done = idx < step;
         const active = idx === step;
+        const isLast = visibleIdx === visibleSteps.length - 1;
         return (
           <div key={s.id} className="flex items-center gap-2">
             <div
@@ -560,11 +815,11 @@ function Stepper({ step }) {
                     : "bg-neg-surface-container-highest"
                 }`}
               >
-                {done ? "✓" : idx + 1}
+                {done ? "✓" : visibleIdx + 1}
               </span>
               {s.label}
             </div>
-            {idx < STEPS.length - 1 && (
+            {!isLast && (
               <span className="material-symbols-outlined text-[16px] text-neg-on-surface-variant">
                 chevron_right
               </span>
