@@ -322,10 +322,13 @@ export default function InicioTurnoPage() {
               <p className="text-xs uppercase tracking-wider font-semibold text-neg-on-surface-variant">
                 Conductor
               </p>
-              <p className="text-base font-bold text-neg-on-surface mt-1">
+              <p className="text-base font-bold text-neg-on-surface mt-1 break-words">
                 {turno.conductor?.nombre ?? "Sin información"}
               </p>
-              <p className="text-sm text-neg-on-surface-variant mt-1">
+              <p
+                className="text-xs text-neg-on-surface-variant mt-1 break-all"
+                title={turno.conductor?.email ?? ""}
+              >
                 {turno.conductor?.email ?? ""}
               </p>
             </div>
