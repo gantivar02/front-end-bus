@@ -111,6 +111,16 @@ const navGroups = [
     ],
   },
   {
+    title: "Monitoreo",
+    items: [
+      {
+        to: "/negocio/seguimiento",
+        icon: "location_on",
+        label: "Seguimiento en vivo",
+      },
+    ],
+  },
+  {
     title: "Rutas y Paraderos",
     items: [
       {
