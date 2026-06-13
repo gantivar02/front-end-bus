@@ -45,6 +45,7 @@ import BusesPage from "../features/negocio/buses/pages/BusesPage";
 import SeguimientoPage from "../features/negocio/seguimiento/pages/SeguimientoPage";
 import MisGruposPage from "../features/negocio/grupos/pages/MisGruposPage";
 import GruposPublicosPage from "../features/negocio/grupos/pages/GruposPublicosPage";
+import AdministrarGrupoPage from "../features/negocio/grupos/pages/AdministrarGrupoPage";
 import DashboardPage from "../features/dashboard/pages/DashboardPage";
 import UsersPage from "../features/users/pages/UsersPage";
 import RolesPage from "../features/roles/pages/RolesPage";
@@ -155,6 +156,14 @@ export const router = createBrowserRouter([
         element: (
           <RoleRoute allow={[ROL_CIUDADANO, ROL_CONDUCTOR]}>
             <GruposPublicosPage />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: "grupos/:grupoId/administrar",
+        element: (
+          <RoleRoute allow={[ROL_CIUDADANO, ROL_CONDUCTOR]}>
+            <AdministrarGrupoPage />
           </RoleRoute>
         ),
       },
