@@ -96,6 +96,29 @@ const navGroups = [
         label: "Mis grupos",
         roles: [ROL_CIUDADANO, ROL_CONDUCTOR],
       },
+      {
+        to: "/negocio/notificaciones",
+        icon: "notifications",
+        label: "Mis notificaciones",
+        roles: [ROL_CIUDADANO, ROL_CONDUCTOR],
+      },
+    ],
+  },
+  {
+    title: "Alertas masivas",
+    items: [
+      {
+        to: "/negocio/alertas/nueva",
+        icon: "campaign",
+        label: "Nueva alerta",
+        roles: ROLES_ADMIN,
+      },
+      {
+        to: "/negocio/alertas/mis-enviadas",
+        icon: "history",
+        label: "Mis alertas enviadas",
+        roles: ROLES_ADMIN,
+      },
     ],
   },
   {
