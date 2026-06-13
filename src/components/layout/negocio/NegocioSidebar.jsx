@@ -82,6 +82,17 @@ const navGroups = [
     ],
   },
   {
+    title: "Comunidad",
+    items: [
+      {
+        to: "/negocio/grupos/mios",
+        icon: "groups",
+        label: "Mis grupos",
+        roles: [ROL_CIUDADANO, ROL_CONDUCTOR],
+      },
+    ],
+  },
+  {
     title: "Conductores y turnos",
     items: [
       {
