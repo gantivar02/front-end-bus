@@ -46,6 +46,9 @@ import SeguimientoPage from "../features/negocio/seguimiento/pages/SeguimientoPa
 import MisGruposPage from "../features/negocio/grupos/pages/MisGruposPage";
 import GruposPublicosPage from "../features/negocio/grupos/pages/GruposPublicosPage";
 import AdministrarGrupoPage from "../features/negocio/grupos/pages/AdministrarGrupoPage";
+import CrearAlertaPage from "../features/negocio/alertas/pages/CrearAlertaPage";
+import MisAlertasEnviadasPage from "../features/negocio/alertas/pages/MisAlertasEnviadasPage";
+import MisNotificacionesPage from "../features/negocio/alertas/pages/MisNotificacionesPage";
 import DashboardPage from "../features/dashboard/pages/DashboardPage";
 import UsersPage from "../features/users/pages/UsersPage";
 import RolesPage from "../features/roles/pages/RolesPage";
@@ -164,6 +167,30 @@ export const router = createBrowserRouter([
         element: (
           <RoleRoute allow={[ROL_CIUDADANO, ROL_CONDUCTOR]}>
             <AdministrarGrupoPage />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: "alertas/nueva",
+        element: (
+          <RoleRoute allow={ROLES_ADMIN}>
+            <CrearAlertaPage />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: "alertas/mis-enviadas",
+        element: (
+          <RoleRoute allow={ROLES_ADMIN}>
+            <MisAlertasEnviadasPage />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: "notificaciones",
+        element: (
+          <RoleRoute allow={[ROL_CIUDADANO, ROL_CONDUCTOR]}>
+            <MisNotificacionesPage />
           </RoleRoute>
         ),
       },
