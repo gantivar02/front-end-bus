@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   NegPageHeader,
   NegCard,
@@ -29,6 +30,7 @@ const VISIBILIDAD_LABEL = {
  * el usuario abandona desde otro dispositivo.
  */
 export default function MisGruposPage() {
+  const navigate = useNavigate();
   const [grupos, setGrupos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -199,7 +201,18 @@ export default function MisGruposPage() {
                     </div>
                   </div>
                 </div>
-                <div className="md:shrink-0">
+                <div className="md:shrink-0 flex flex-wrap gap-2">
+                  {grupo.rol === "admin" && (
+                    <NegButton
+                      variant="outlined"
+                      icon="shield_person"
+                      onClick={() =>
+                        navigate(`/negocio/grupos/${grupo.grupo_id}/administrar`)
+                      }
+                    >
+                      Administrar
+                    </NegButton>
+                  )}
                   <NegButton
                     variant="outlined"
                     icon="logout"

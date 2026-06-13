@@ -45,3 +45,67 @@ export async function unirseAGrupo(grupoId) {
   );
   return data;
 }
+
+// ----------------------------------------------------------------
+// HU 3-010 — Administracion de miembros (solo admin del grupo).
+// ----------------------------------------------------------------
+
+/**
+ * GET /grupo-persona/grupos/:grupoId/miembros
+ * Lista miembros (activos e historicos) del grupo. Acepta busqueda.
+ */
+export async function listMiembrosGrupo(grupoId, { search } = {}) {
+  const params = {};
+  if (search && search.trim().length > 0) params.search = search.trim();
+  const { data } = await negocioApi.get(
+    `/grupo-persona/grupos/${grupoId}/miembros`,
+    { params },
+  );
+  return data;
+}
+
+/**
+ * PATCH /grupo-persona/grupos/:grupoId/miembros/:personaId/rol
+ * Promueve o degrada a un miembro.
+ */
+export async function cambiarRolMiembro(grupoId, personaId, rol) {
+  const { data } = await negocioApi.patch(
+    `/grupo-persona/grupos/${grupoId}/miembros/${personaId}/rol`,
+    { rol },
+  );
+  return data;
+}
+
+/**
+ * DELETE /grupo-persona/grupos/:grupoId/miembros/:personaId
+ * Remueve a un miembro del grupo (soft delete).
+ */
+export async function removerMiembroGrupo(grupoId, personaId) {
+  const { data } = await negocioApi.delete(
+    `/grupo-persona/grupos/${grupoId}/miembros/${personaId}`,
+  );
+  return data;
+}
+
+/**
+ * PATCH /grupo-persona/grupos/:grupoId/miembros/:personaId/bloqueo
+ * Bloquea o desbloquea a un usuario.
+ */
+export async function cambiarBloqueoMiembro(grupoId, personaId, bloqueado) {
+  const { data } = await negocioApi.patch(
+    `/grupo-persona/grupos/${grupoId}/miembros/${personaId}/bloqueo`,
+    { bloqueado },
+  );
+  return data;
+}
+
+/**
+ * GET /grupo-persona/grupos/:grupoId/historial
+ * Log de cambios de membresia del grupo.
+ */
+export async function listHistorialGrupo(grupoId) {
+  const { data } = await negocioApi.get(
+    `/grupo-persona/grupos/${grupoId}/historial`,
+  );
+  return data;
+}
