@@ -43,6 +43,7 @@ import ConductoresPage from "../features/negocio/conductores/pages/ConductoresPa
 import ProgramacionesPage from "../features/negocio/programaciones/pages/ProgramacionesPage";
 import BusesPage from "../features/negocio/buses/pages/BusesPage";
 import SeguimientoPage from "../features/negocio/seguimiento/pages/SeguimientoPage";
+import MisGruposPage from "../features/negocio/grupos/pages/MisGruposPage";
 import DashboardPage from "../features/dashboard/pages/DashboardPage";
 import UsersPage from "../features/users/pages/UsersPage";
 import RolesPage from "../features/roles/pages/RolesPage";
@@ -137,6 +138,14 @@ export const router = createBrowserRouter([
         element: (
           <RoleRoute allow={[ROL_CIUDADANO]}>
             <MisBoletosPage />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: "grupos/mios",
+        element: (
+          <RoleRoute allow={[ROL_CIUDADANO, ROL_CONDUCTOR]}>
+            <MisGruposPage />
           </RoleRoute>
         ),
       },
