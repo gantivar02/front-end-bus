@@ -85,6 +85,12 @@ const navGroups = [
     title: "Comunidad",
     items: [
       {
+        to: "/negocio/grupos/publicos",
+        icon: "explore",
+        label: "Directorio de grupos",
+        roles: [ROL_CIUDADANO, ROL_CONDUCTOR],
+      },
+      {
         to: "/negocio/grupos/mios",
         icon: "groups",
         label: "Mis grupos",

@@ -19,3 +19,29 @@ export async function abandonarGrupo(grupoId) {
   );
   return data;
 }
+
+/**
+ * GET /grupos/publicos
+ * Directorio de grupos publicos disponibles para unirse (HU 3-009).
+ * Acepta busqueda libre opcional sobre nombre o descripcion.
+ * Cada grupo trae total_miembros y ya_soy_miembro (calculado contra el JWT).
+ */
+export async function listGruposPublicos({ search } = {}) {
+  const params = {};
+  if (search && search.trim().length > 0) {
+    params.search = search.trim();
+  }
+  const { data } = await negocioApi.get("/grupos/publicos", { params });
+  return data;
+}
+
+/**
+ * POST /grupo-persona/grupos/:grupoId/unirse
+ * El usuario autenticado se une a un grupo publico (HU 3-009).
+ */
+export async function unirseAGrupo(grupoId) {
+  const { data } = await negocioApi.post(
+    `/grupo-persona/grupos/${grupoId}/unirse`,
+  );
+  return data;
+}
