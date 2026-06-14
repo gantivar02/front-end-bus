@@ -175,6 +175,12 @@ const navGroups = [
         icon: "location_on",
         label: "Seguimiento en vivo",
       },
+      {
+        to: "/negocio/panel",
+        icon: "monitor_heart",
+        label: "Panel de control",
+        roles: ROLES_GESTION,
+      },
     ],
   },
   {

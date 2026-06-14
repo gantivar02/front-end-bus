@@ -6,6 +6,7 @@ import {
   NegDataTable,
 } from "../../../../components/negocio";
 import BusForm from "../components/BusForm";
+import GpsModal from "../components/GpsModal";
 import { listBuses, createBus, updateBus, deleteBus } from "../busesService";
 import { resolveStaticUrl } from "../../../../services/negocioApi";
 
@@ -21,7 +22,7 @@ const ESTADO_LABELS = {
   fuera_de_servicio: "Fuera de servicio",
 };
 
-function buildColumns(onEdit, onDeleteRequest, onShowQr) {
+function buildColumns(onEdit, onDeleteRequest, onShowQr, onGps) {
   return [
     {
       key: "bus",
@@ -93,34 +94,32 @@ function buildColumns(onEdit, onDeleteRequest, onShowQr) {
     {
       key: "acciones",
       header: "",
-      width: 110,
+      width: 140,
       render: (r) => (
         <div className="flex items-center gap-0.5">
           <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onShowQr(r);
-            }}
+            onClick={(e) => { e.stopPropagation(); onGps(r); }}
+            className="p-1.5 rounded-lg text-neg-on-surface-variant hover:text-neg-primary hover:bg-neg-primary/10 transition-colors"
+            title="Asignar posición GPS"
+          >
+            <span className="material-symbols-outlined text-[18px]">location_on</span>
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); onShowQr(r); }}
             className="p-1.5 rounded-lg text-neg-on-surface-variant hover:text-neg-primary hover:bg-neg-primary/10 transition-colors"
             title="Ver código QR"
           >
             <span className="material-symbols-outlined text-[18px]">qr_code</span>
           </button>
           <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onEdit(r);
-            }}
+            onClick={(e) => { e.stopPropagation(); onEdit(r); }}
             className="p-1.5 rounded-lg text-neg-on-surface-variant hover:text-neg-primary hover:bg-neg-primary/10 transition-colors"
             title="Editar"
           >
             <span className="material-symbols-outlined text-[18px]">edit</span>
           </button>
           <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onDeleteRequest(r);
-            }}
+            onClick={(e) => { e.stopPropagation(); onDeleteRequest(r); }}
             className="p-1.5 rounded-lg text-neg-on-surface-variant hover:text-neg-error hover:bg-neg-error/10 transition-colors"
             title="Eliminar"
           >
@@ -146,6 +145,7 @@ export default function BusesPage() {
   const [deleting, setDeleting] = useState(false);
 
   const [qrBus, setQrBus] = useState(null);
+  const [gpsBus, setGpsBus] = useState(null);
 
   const load = () => {
     setLoading(true);
@@ -213,7 +213,7 @@ export default function BusesPage() {
     }
   };
 
-  const columns = buildColumns(openEdit, setDeleteTarget, setQrBus);
+  const columns = buildColumns(openEdit, setDeleteTarget, setQrBus, setGpsBus);
 
   return (
     <div className="max-w-6xl">
@@ -303,6 +303,9 @@ export default function BusesPage() {
           </div>
         </div>
       )}
+
+      {/* Modal GPS */}
+      {gpsBus && <GpsModal bus={gpsBus} onClose={() => setGpsBus(null)} />}
 
       {/* Modal QR */}
       {qrBus && (
