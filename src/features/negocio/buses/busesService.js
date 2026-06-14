@@ -23,3 +23,8 @@ export async function listEmpresas() {
   const { data } = await negocioApi.get("/empresas");
   return data;
 }
+
+export async function upsertGpsBus(busId, latitud, longitud) {
+  const { data } = await negocioApi.patch(`/gps/bus/${busId}`, { latitud, longitud });
+  return data;
+}

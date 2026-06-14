@@ -43,6 +43,7 @@ import ConductoresPage from "../features/negocio/conductores/pages/ConductoresPa
 import ProgramacionesPage from "../features/negocio/programaciones/pages/ProgramacionesPage";
 import BusesPage from "../features/negocio/buses/pages/BusesPage";
 import SeguimientoPage from "../features/negocio/seguimiento/pages/SeguimientoPage";
+import PanelControlPage from "../features/negocio/panel/pages/PanelControlPage";
 import DashboardPage from "../features/dashboard/pages/DashboardPage";
 import UsersPage from "../features/users/pages/UsersPage";
 import RolesPage from "../features/roles/pages/RolesPage";
@@ -198,6 +199,14 @@ export const router = createBrowserRouter([
       },
       { path: "rutas", element: <RutasPage /> },
       { path: "seguimiento", element: <SeguimientoPage /> },
+      {
+        path: "panel",
+        element: (
+          <RoleRoute allow={ROLES_GESTION}>
+            <PanelControlPage />
+          </RoleRoute>
+        ),
+      },
       {
         path: "buses",
         element: (
