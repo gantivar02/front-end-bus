@@ -105,6 +105,23 @@ const navGroups = [
     ],
   },
   {
+    title: "Atención al cliente",
+    items: [
+      {
+        to: "/negocio/citas/agendar",
+        icon: "event",
+        label: "Agendar cita",
+        roles: [ROL_CIUDADANO, ROL_CONDUCTOR],
+      },
+      {
+        to: "/negocio/citas/mis-citas",
+        icon: "event_available",
+        label: "Mis citas",
+        roles: [ROL_CIUDADANO, ROL_CONDUCTOR],
+      },
+    ],
+  },
+  {
     title: "Alertas masivas",
     items: [
       {
