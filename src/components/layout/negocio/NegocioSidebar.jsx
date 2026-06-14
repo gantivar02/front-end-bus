@@ -82,6 +82,63 @@ const navGroups = [
     ],
   },
   {
+    title: "Comunidad",
+    items: [
+      {
+        to: "/negocio/grupos/publicos",
+        icon: "explore",
+        label: "Directorio de grupos",
+        roles: [ROL_CIUDADANO, ROL_CONDUCTOR],
+      },
+      {
+        to: "/negocio/grupos/mios",
+        icon: "groups",
+        label: "Mis grupos",
+        roles: [ROL_CIUDADANO, ROL_CONDUCTOR],
+      },
+      {
+        to: "/negocio/notificaciones",
+        icon: "notifications",
+        label: "Mis notificaciones",
+        roles: [ROL_CIUDADANO, ROL_CONDUCTOR],
+      },
+    ],
+  },
+  {
+    title: "Atención al cliente",
+    items: [
+      {
+        to: "/negocio/citas/agendar",
+        icon: "event",
+        label: "Agendar cita",
+        roles: [ROL_CIUDADANO, ROL_CONDUCTOR],
+      },
+      {
+        to: "/negocio/citas/mis-citas",
+        icon: "event_available",
+        label: "Mis citas",
+        roles: [ROL_CIUDADANO, ROL_CONDUCTOR],
+      },
+    ],
+  },
+  {
+    title: "Alertas masivas",
+    items: [
+      {
+        to: "/negocio/alertas/nueva",
+        icon: "campaign",
+        label: "Nueva alerta",
+        roles: ROLES_ADMIN,
+      },
+      {
+        to: "/negocio/alertas/mis-enviadas",
+        icon: "history",
+        label: "Mis alertas enviadas",
+        roles: ROLES_ADMIN,
+      },
+    ],
+  },
+  {
     title: "Conductores y turnos",
     items: [
       {

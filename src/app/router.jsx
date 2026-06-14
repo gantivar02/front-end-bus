@@ -44,6 +44,14 @@ import ProgramacionesPage from "../features/negocio/programaciones/pages/Program
 import BusesPage from "../features/negocio/buses/pages/BusesPage";
 import SeguimientoPage from "../features/negocio/seguimiento/pages/SeguimientoPage";
 import PanelControlPage from "../features/negocio/panel/pages/PanelControlPage";
+import MisGruposPage from "../features/negocio/grupos/pages/MisGruposPage";
+import GruposPublicosPage from "../features/negocio/grupos/pages/GruposPublicosPage";
+import AdministrarGrupoPage from "../features/negocio/grupos/pages/AdministrarGrupoPage";
+import CrearAlertaPage from "../features/negocio/alertas/pages/CrearAlertaPage";
+import MisAlertasEnviadasPage from "../features/negocio/alertas/pages/MisAlertasEnviadasPage";
+import MisNotificacionesPage from "../features/negocio/alertas/pages/MisNotificacionesPage";
+import AgendarCitaPage from "../features/negocio/citas/pages/AgendarCitaPage";
+import MisCitasPage from "../features/negocio/citas/pages/MisCitasPage";
 import DashboardPage from "../features/dashboard/pages/DashboardPage";
 import UsersPage from "../features/users/pages/UsersPage";
 import RolesPage from "../features/roles/pages/RolesPage";
@@ -138,6 +146,70 @@ export const router = createBrowserRouter([
         element: (
           <RoleRoute allow={[ROL_CIUDADANO]}>
             <MisBoletosPage />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: "grupos/mios",
+        element: (
+          <RoleRoute allow={[ROL_CIUDADANO, ROL_CONDUCTOR]}>
+            <MisGruposPage />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: "grupos/publicos",
+        element: (
+          <RoleRoute allow={[ROL_CIUDADANO, ROL_CONDUCTOR]}>
+            <GruposPublicosPage />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: "grupos/:grupoId/administrar",
+        element: (
+          <RoleRoute allow={[ROL_CIUDADANO, ROL_CONDUCTOR]}>
+            <AdministrarGrupoPage />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: "alertas/nueva",
+        element: (
+          <RoleRoute allow={ROLES_ADMIN}>
+            <CrearAlertaPage />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: "alertas/mis-enviadas",
+        element: (
+          <RoleRoute allow={ROLES_ADMIN}>
+            <MisAlertasEnviadasPage />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: "notificaciones",
+        element: (
+          <RoleRoute allow={[ROL_CIUDADANO, ROL_CONDUCTOR]}>
+            <MisNotificacionesPage />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: "citas/agendar",
+        element: (
+          <RoleRoute allow={[ROL_CIUDADANO, ROL_CONDUCTOR]}>
+            <AgendarCitaPage />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: "citas/mis-citas",
+        element: (
+          <RoleRoute allow={[ROL_CIUDADANO, ROL_CONDUCTOR]}>
+            <MisCitasPage />
           </RoleRoute>
         ),
       },
