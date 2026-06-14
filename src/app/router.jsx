@@ -49,6 +49,8 @@ import AdministrarGrupoPage from "../features/negocio/grupos/pages/AdministrarGr
 import CrearAlertaPage from "../features/negocio/alertas/pages/CrearAlertaPage";
 import MisAlertasEnviadasPage from "../features/negocio/alertas/pages/MisAlertasEnviadasPage";
 import MisNotificacionesPage from "../features/negocio/alertas/pages/MisNotificacionesPage";
+import AgendarCitaPage from "../features/negocio/citas/pages/AgendarCitaPage";
+import MisCitasPage from "../features/negocio/citas/pages/MisCitasPage";
 import DashboardPage from "../features/dashboard/pages/DashboardPage";
 import UsersPage from "../features/users/pages/UsersPage";
 import RolesPage from "../features/roles/pages/RolesPage";
@@ -191,6 +193,22 @@ export const router = createBrowserRouter([
         element: (
           <RoleRoute allow={[ROL_CIUDADANO, ROL_CONDUCTOR]}>
             <MisNotificacionesPage />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: "citas/agendar",
+        element: (
+          <RoleRoute allow={[ROL_CIUDADANO, ROL_CONDUCTOR]}>
+            <AgendarCitaPage />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: "citas/mis-citas",
+        element: (
+          <RoleRoute allow={[ROL_CIUDADANO, ROL_CONDUCTOR]}>
+            <MisCitasPage />
           </RoleRoute>
         ),
       },
