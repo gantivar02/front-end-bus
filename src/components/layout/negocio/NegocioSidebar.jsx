@@ -97,6 +97,12 @@ const navGroups = [
     title: "Comunidad",
     items: [
       {
+        to: "/negocio/mensajes",
+        icon: "mail",
+        label: "Mensajería",
+        roles: [ROL_CIUDADANO, ROL_CONDUCTOR],
+      },
+      {
         to: "/negocio/grupos/publicos",
         icon: "explore",
         label: "Directorio de grupos",
