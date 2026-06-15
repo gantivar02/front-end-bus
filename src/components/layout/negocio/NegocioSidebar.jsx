@@ -79,6 +79,12 @@ const navGroups = [
         label: "Historial de viajes",
         roles: [ROL_CIUDADANO],
       },
+      {
+        to: "/negocio/alertas-bus",
+        icon: "notifications_active",
+        label: "Alertas de bus",
+        roles: [ROL_CIUDADANO],
+      },
     ],
   },
   {

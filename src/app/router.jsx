@@ -44,6 +44,7 @@ import ProgramacionesPage from "../features/negocio/programaciones/pages/Program
 import BusesPage from "../features/negocio/buses/pages/BusesPage";
 import SeguimientoPage from "../features/negocio/seguimiento/pages/SeguimientoPage";
 import PanelControlPage from "../features/negocio/panel/pages/PanelControlPage";
+import NotificacionBusPage from "../features/negocio/alertas-bus/pages/NotificacionBusPage";
 import MisGruposPage from "../features/negocio/grupos/pages/MisGruposPage";
 import GruposPublicosPage from "../features/negocio/grupos/pages/GruposPublicosPage";
 import AdministrarGrupoPage from "../features/negocio/grupos/pages/AdministrarGrupoPage";
@@ -271,6 +272,14 @@ export const router = createBrowserRouter([
       },
       { path: "rutas", element: <RutasPage /> },
       { path: "seguimiento", element: <SeguimientoPage /> },
+      {
+        path: "alertas-bus",
+        element: (
+          <RoleRoute allow={[ROL_CIUDADANO]}>
+            <NotificacionBusPage />
+          </RoleRoute>
+        ),
+      },
       {
         path: "panel",
         element: (
