@@ -85,6 +85,12 @@ const navGroups = [
         label: "Alertas de bus",
         roles: [ROL_CIUDADANO],
       },
+      {
+        to: "/negocio/clima",
+        icon: "wb_sunny",
+        label: "Alertas de clima",
+        roles: [ROL_CIUDADANO],
+      },
     ],
   },
   {
