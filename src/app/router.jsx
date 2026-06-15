@@ -45,6 +45,7 @@ import BusesPage from "../features/negocio/buses/pages/BusesPage";
 import SeguimientoPage from "../features/negocio/seguimiento/pages/SeguimientoPage";
 import PanelControlPage from "../features/negocio/panel/pages/PanelControlPage";
 import NotificacionBusPage from "../features/negocio/alertas-bus/pages/NotificacionBusPage";
+import PerfilClimaPage from "../features/negocio/clima/pages/PerfilClimaPage";
 import MisGruposPage from "../features/negocio/grupos/pages/MisGruposPage";
 import GruposPublicosPage from "../features/negocio/grupos/pages/GruposPublicosPage";
 import AdministrarGrupoPage from "../features/negocio/grupos/pages/AdministrarGrupoPage";
@@ -280,6 +281,7 @@ export const router = createBrowserRouter([
           </RoleRoute>
         ),
       },
+      { path: "clima", element: <PerfilClimaPage /> },
       {
         path: "panel",
         element: (
