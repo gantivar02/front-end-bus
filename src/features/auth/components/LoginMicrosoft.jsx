@@ -14,7 +14,7 @@ const MicrosoftIcon = () => (
 const btnClass =
   "flex items-center justify-center gap-2 py-3 px-4 w-full bg-surface-container-low border border-outline-variant/30 rounded-lg hover:bg-surface-container transition-colors font-label text-sm font-semibold text-on-surface disabled:opacity-60 disabled:cursor-not-allowed";
 
-export default function LoginMicrosoft({ onSuccess }) {
+export default function LoginMicrosoft({ onSuccess, onRequiresProfileCompletion }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -36,6 +36,10 @@ export default function LoginMicrosoft({ onSuccess }) {
         { skipAuth: true, skipAuthRedirect: true }
       );
       const data = apiResponse.data;
+      if (data?.requiresProfileCompletion) {
+        onRequiresProfileCompletion?.(data);
+        return;
+      }
       if (!data?.token) throw new Error(data?.message || "No fue posible validar el login con Microsoft");
       onSuccess(data.token);
     } catch (err) {
