@@ -137,6 +137,12 @@ const navGroups = [
         label: "Mis citas",
         roles: [ROL_CIUDADANO, ROL_CONDUCTOR],
       },
+      {
+        to: "/negocio/pqrs",
+        icon: "support_agent",
+        label: "PQRS",
+        roles: [...ROLES_GESTION, ROL_CIUDADANO, ROL_CONDUCTOR],
+      },
     ],
   },
   {

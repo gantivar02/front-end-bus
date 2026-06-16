@@ -18,10 +18,18 @@ const ESTADO_RECARGA = {
   fallida: { label: "Fallida", tone: "danger", icon: "error" },
 };
 
+const ESTADO_PQRS = {
+  recibido: { label: "Recibido", tone: "warning", icon: "mark_email_read" },
+  en_revision: { label: "En revision", tone: "warning", icon: "manage_search" },
+  en_proceso: { label: "En proceso", tone: "neutral", icon: "sync" },
+  resuelto: { label: "Resuelto", tone: "success", icon: "task_alt" },
+};
+
 const KINDS = {
   estado: ESTADO_INCIDENTE,
   gravedad: GRAVEDAD,
   recarga: ESTADO_RECARGA,
+  pqrs: ESTADO_PQRS,
 };
 
 const TONES = {

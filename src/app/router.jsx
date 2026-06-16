@@ -55,6 +55,7 @@ import MisNotificacionesPage from "../features/negocio/alertas/pages/MisNotifica
 import MensajeriaPage from "../features/negocio/mensajeria/pages/MensajeriaPage";
 import AgendarCitaPage from "../features/negocio/citas/pages/AgendarCitaPage";
 import MisCitasPage from "../features/negocio/citas/pages/MisCitasPage";
+import PqrsPage from "../features/negocio/pqrs/pages/PqrsPage";
 import DashboardPage from "../features/dashboard/pages/DashboardPage";
 import UsersPage from "../features/users/pages/UsersPage";
 import RolesPage from "../features/roles/pages/RolesPage";
@@ -234,6 +235,22 @@ export const router = createBrowserRouter([
         element: (
           <RoleRoute allow={[ROL_CIUDADANO, ROL_CONDUCTOR]}>
             <MisCitasPage />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: "pqrs",
+        element: (
+          <RoleRoute
+            allow={[
+              ROL_CIUDADANO,
+              ROL_CONDUCTOR,
+              ROL_ADMIN_SISTEMA,
+              ROL_ADMIN_EMPRESA,
+              ROL_SUPERVISOR,
+            ]}
+          >
+            <PqrsPage />
           </RoleRoute>
         ),
       },
