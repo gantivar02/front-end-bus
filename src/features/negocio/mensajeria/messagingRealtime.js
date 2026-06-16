@@ -5,6 +5,7 @@ const WS_EVENTS = [
   "mensaje:nuevo",
   "mensaje:grupo",
   "mensaje:leido",
+  "grupo:bienvenida",
   "grupo:miembro-agregado",
   "grupo:miembro-removido",
   "mensaje:grupo-eliminado",
