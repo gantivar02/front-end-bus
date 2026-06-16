@@ -6,6 +6,7 @@ import styles from "./UserForm.module.css";
 
 const initialForm = {
   name: "",
+  lastName: "",
   email: "",
   password: "",
 };
@@ -22,6 +23,7 @@ export default function UserForm({
     if (initialData) {
       setForm({
         name: initialData.name || "",
+        lastName: initialData.lastName || "",
         email: initialData.email || "",
         password: "",
       });
@@ -53,6 +55,15 @@ export default function UserForm({
           value={form.name}
           onChange={handleChange}
           placeholder="Nombre del usuario"
+          required
+        />
+
+        <Input
+          label="Apellido"
+          name="lastName"
+          value={form.lastName}
+          onChange={handleChange}
+          placeholder="Apellido del usuario"
           required
         />
 
