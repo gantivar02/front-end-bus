@@ -44,13 +44,8 @@ export async function sendGroupMessage(payload) {
 }
 
 export async function listMyGroups() {
-  const { data } = await negocioApi.get("/grupos/mios");
+  const { data } = await negocioApi.get("/grupo-persona/mis-grupos");
   return Array.isArray(data) ? data : [];
-}
-
-export async function createCommunicationGroup(payload) {
-  const { data } = await negocioApi.post("/grupos/comunicacion", payload);
-  return data;
 }
 
 export async function deleteGroupMessage(grupoId, mensajeId) {

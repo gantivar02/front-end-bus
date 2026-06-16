@@ -1,5 +1,12 @@
 import negocioApi from "../../../services/negocioApi";
 
+export async function searchPersonasGrupo(q) {
+  const { data } = await negocioApi.get("/personas/search", {
+    params: { q },
+  });
+  return Array.isArray(data) ? data : [];
+}
+
 /**
  * GET /grupo-persona/mis-grupos
  * Devuelve los grupos donde el usuario autenticado es miembro activo.
@@ -43,6 +50,15 @@ export async function unirseAGrupo(grupoId) {
   const { data } = await negocioApi.post(
     `/grupo-persona/grupos/${grupoId}/unirse`,
   );
+  return data;
+}
+
+/**
+ * POST /grupos/comunicacion
+ * Crea un grupo de comunicación y agrega miembros iniciales.
+ */
+export async function createCommunicationGroup(payload) {
+  const { data } = await negocioApi.post("/grupos/comunicacion", payload);
   return data;
 }
 

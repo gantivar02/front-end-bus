@@ -191,8 +191,16 @@ export default function GruposPublicosPage() {
                     }
                     className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-neg-surface-container transition-colors"
                   >
-                    <div className="w-10 h-10 rounded-xl bg-neg-primary-container text-neg-on-primary-container flex items-center justify-center shrink-0">
-                      <span className="material-symbols-outlined">groups</span>
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-neg-primary-container text-neg-on-primary-container">
+                      {grupo.imagen_url ? (
+                        <img
+                          src={grupo.imagen_url}
+                          alt={`Grupo ${grupo.nombre}`}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <span className="material-symbols-outlined">groups</span>
+                      )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-neg-on-surface truncate">

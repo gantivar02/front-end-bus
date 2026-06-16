@@ -10,6 +10,7 @@ import {
   NegTextarea,
 } from "../../../../components/negocio";
 import { useAuth } from "../../../../context/AuthContext";
+import { useMessageNotifications } from "../messageNotificationsContext";
 import {
   getMessageDetail,
   getUnreadCount,
@@ -18,10 +19,7 @@ import {
   searchPersonas,
   sendDirectMessage,
 } from "../mensajeriaService";
-import {
-  ensureMessagingSocket,
-  subscribeMessagingEvents,
-} from "../messagingRealtime";
+import { subscribeMessagingEvents } from "../messagingRealtime";
 
 const FEED_OPTIONS = [
   { value: "recibidos", label: "Recibidos" },
@@ -88,12 +86,12 @@ function MessageListItem({ message, active, onClick }) {
 
 export default function MensajesDirectosPage() {
   const { token } = useAuth();
+  const { unreadCount, syncUnreadCount } = useMessageNotifications();
 
   const [feedTab, setFeedTab] = useState("recibidos");
   const [soloNoLeidos, setSoloNoLeidos] = useState(false);
   const [inbox, setInbox] = useState([]);
   const [sent, setSent] = useState([]);
-  const [unreadCount, setUnreadCount] = useState(0);
   const [loadingFeed, setLoadingFeed] = useState(true);
   const [feedError, setFeedError] = useState("");
 
@@ -125,7 +123,7 @@ export default function MensajesDirectosPage() {
       ]);
       setInbox(Array.isArray(inboxData) ? inboxData : []);
       setSent(Array.isArray(sentData) ? sentData : []);
-      setUnreadCount(Number(unread ?? 0));
+      syncUnreadCount(Number(unread ?? 0));
     } catch (error) {
       setFeedError(
         error?.response?.data?.message ??
@@ -134,7 +132,7 @@ export default function MensajesDirectosPage() {
     } finally {
       setLoadingFeed(false);
     }
-  }, [soloNoLeidos]);
+  }, [soloNoLeidos, syncUnreadCount]);
 
   useEffect(() => {
     loadFeed();
@@ -193,7 +191,6 @@ export default function MensajesDirectosPage() {
   useEffect(() => {
     if (!token) return undefined;
 
-    ensureMessagingSocket(token);
     return subscribeMessagingEvents(({ type }) => {
       if (type !== "mensaje:nuevo" && type !== "mensaje:leido") return;
       loadFeed();

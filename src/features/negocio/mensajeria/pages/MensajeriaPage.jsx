@@ -10,10 +10,11 @@ import {
   NegTextarea,
 } from "../../../../components/negocio";
 import { useAuth } from "../../../../context/AuthContext";
+import { useMessageNotifications } from "../messageNotificationsContext";
 import {
-  createCommunicationGroup,
   deleteGroupMessage,
   getMessageDetail,
+  getUnreadCount,
   listInbox,
   listMyGroups,
   listSent,
@@ -21,10 +22,7 @@ import {
   sendDirectMessage,
   sendGroupMessage,
 } from "../mensajeriaService";
-import {
-  ensureMessagingSocket,
-  subscribeMessagingEvents,
-} from "../messagingRealtime";
+import { subscribeMessagingEvents } from "../messagingRealtime";
 
 const FEED_OPTIONS = [
   { value: "recibidos", label: "Recibidos" },
@@ -36,12 +34,26 @@ const COMPOSE_OPTIONS = [
   { value: "grupo", label: "Mensaje a grupo" },
 ];
 
+const MESSAGING_EVENTS = new Set([
+  "mensaje:nuevo",
+  "mensaje:grupo",
+  "mensaje:leido",
+  "mensaje:grupo-eliminado",
+  "grupo:bienvenida",
+  "grupo:miembro-agregado",
+  "grupo:miembro-removido",
+]);
+
 function formatDateTime(value) {
   if (!value) return "—";
-  return new Date(value).toLocaleString("es-CO", {
-    dateStyle: "short",
-    timeStyle: "short",
-  });
+  try {
+    return new Date(value).toLocaleString("es-CO", {
+      dateStyle: "short",
+      timeStyle: "short",
+    });
+  } catch {
+    return String(value);
+  }
 }
 
 function getMessageTarget(detail) {
@@ -59,17 +71,19 @@ function MessageListItem({ message, active, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className={`w-full text-left rounded-2xl border p-4 transition-colors hover:border-neg-primary/40 hover:bg-neg-primary/5 ${toneClass} ${
+      className={`w-full rounded-2xl border p-4 text-left transition-colors hover:border-neg-primary/40 hover:bg-neg-primary/5 ${toneClass} ${
         active ? "ring-2 ring-neg-primary/20" : ""
       }`}
     >
-      <div className="flex items-start justify-between gap-3 mb-2">
+      <div className="mb-2 flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <p className="font-semibold text-neg-on-surface truncate">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="truncate font-semibold text-neg-on-surface">
               {message.tipo === "grupo"
                 ? message.grupo?.nombre
-                : message.emisor?.nombre_completo}
+                : message.enviado_por_mi
+                  ? message.destinatario?.nombre_completo
+                  : message.emisor?.nombre_completo}
             </p>
             <NegChip tone={message.tipo === "grupo" ? "secondary" : "primary"}>
               {message.tipo === "grupo" ? "Grupo" : "Directo"}
@@ -78,23 +92,25 @@ function MessageListItem({ message, active, onClick }) {
               <NegChip tone="warning">No leído</NegChip>
             )}
           </div>
-          <p className="text-xs text-neg-on-surface-variant mt-1 truncate">
+          <p className="mt-1 truncate text-xs text-neg-on-surface-variant">
             {message.tipo === "grupo"
               ? `De ${message.emisor?.nombre_completo}`
               : message.enviado_por_mi
-                ? `Para ${message.destinatario?.nombre_completo ?? "sin destinatario"}`
+                ? `Para ${message.destinatario?.email ?? "sin destinatario"}`
                 : message.emisor?.email}
           </p>
         </div>
-        <span className="text-[11px] text-neg-on-surface-variant shrink-0">
+        <span className="shrink-0 text-[11px] text-neg-on-surface-variant">
           {formatDateTime(message.fecha_envio)}
         </span>
       </div>
-      <p className="text-sm text-neg-on-surface-variant line-clamp-2">
+
+      <p className="line-clamp-2 text-sm text-neg-on-surface-variant">
         {message.preview}
       </p>
+
       {message.enviado_por_mi && message.tipo === "directo" && (
-        <p className="text-[11px] text-neg-on-surface-variant mt-3">
+        <p className="mt-3 text-[11px] text-neg-on-surface-variant">
           {message.leido
             ? `Leído el ${formatDateTime(message.leido_en)}`
             : "Pendiente de lectura"}
@@ -116,18 +132,35 @@ function GroupSelectionCard({ group, selected, onToggle }) {
       }`}
     >
       <div className="flex items-start justify-between gap-3">
-        <div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <p className="font-semibold text-neg-on-surface">{group.nombre}</p>
+        <div className="flex min-w-0 items-start gap-3">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-neg-primary-container text-neg-on-primary-container">
+            {group.imagen_url ? (
+              <img
+                src={group.imagen_url}
+                alt={`Grupo ${group.nombre}`}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <span className="material-symbols-outlined">groups</span>
+            )}
+          </div>
+          <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="truncate font-semibold text-neg-on-surface">
+              {group.nombre}
+            </p>
             <NegChip tone={group.puede_gestionar ? "primary" : "neutral"}>
               {group.puede_gestionar ? "Admin" : "Miembro"}
             </NegChip>
           </div>
-          <p className="text-xs text-neg-on-surface-variant mt-1">
+          <p className="mt-1 text-xs text-neg-on-surface-variant">
             {group.descripcion?.trim() || "Sin descripción registrada."}
           </p>
         </div>
-        <NegChip tone="secondary">{group.total_miembros} miembros</NegChip>
+        </div>
+        <NegChip tone="secondary">
+          {group.total_miembros ?? 0} miembros
+        </NegChip>
       </div>
     </button>
   );
@@ -135,10 +168,10 @@ function GroupSelectionCard({ group, selected, onToggle }) {
 
 export default function MensajeriaPage() {
   const { token } = useAuth();
+  const { unreadCount, syncUnreadCount } = useMessageNotifications();
+
   const [feedTab, setFeedTab] = useState("recibidos");
   const [composeMode, setComposeMode] = useState("directo");
-  const [showCreateGroup, setShowCreateGroup] = useState(false);
-
   const [filters, setFilters] = useState({
     tipo: "",
     soloNoLeidos: false,
@@ -177,21 +210,7 @@ export default function MensajeriaPage() {
   const [groupComposeError, setGroupComposeError] = useState("");
   const [groupComposeSuccess, setGroupComposeSuccess] = useState("");
 
-  const [createGroupForm, setCreateGroupForm] = useState({
-    nombre: "",
-    descripcion: "",
-    visibilidad: "publico",
-    imagen_url: "",
-  });
-  const [memberSearchQuery, setMemberSearchQuery] = useState("");
-  const [memberResults, setMemberResults] = useState([]);
-  const [selectedMembers, setSelectedMembers] = useState([]);
-  const [creatingGroup, setCreatingGroup] = useState(false);
-  const [createGroupError, setCreateGroupError] = useState("");
-  const [createGroupSuccess, setCreateGroupSuccess] = useState("");
-
   const currentFeed = feedTab === "recibidos" ? inbox : sent;
-
   const selectedGroupIdsSet = useMemo(
     () => new Set(selectedGroupIds),
     [selectedGroupIds],
@@ -201,12 +220,14 @@ export default function MensajeriaPage() {
     setLoadingFeed(true);
     setFeedError("");
     try {
-      const [inboxData, sentData] = await Promise.all([
+      const [inboxData, sentData, unread] = await Promise.all([
         listInbox(filters),
         listSent(),
+        getUnreadCount(),
       ]);
       setInbox(Array.isArray(inboxData) ? inboxData : []);
       setSent(Array.isArray(sentData) ? sentData : []);
+      syncUnreadCount(Number(unread ?? 0));
     } catch (error) {
       setFeedError(
         error?.response?.data?.message ??
@@ -215,7 +236,7 @@ export default function MensajeriaPage() {
     } finally {
       setLoadingFeed(false);
     }
-  }, [filters]);
+  }, [filters, syncUnreadCount]);
 
   const loadGroups = useCallback(async () => {
     setLoadingGroups(true);
@@ -232,6 +253,16 @@ export default function MensajeriaPage() {
       setLoadingGroups(false);
     }
   }, []);
+
+  const refreshSelectedDetail = useCallback(async () => {
+    if (!selectedMessageId) return;
+    try {
+      const data = await getMessageDetail(selectedMessageId);
+      setSelectedMessage(data);
+    } catch {
+      setSelectedMessage(null);
+    }
+  }, [selectedMessageId]);
 
   useEffect(() => {
     loadFeed();
@@ -273,14 +304,15 @@ export default function MensajeriaPage() {
   }, [selectedMessageId, loadFeed]);
 
   useEffect(() => {
-    if (!directSearchQuery.trim()) {
+    const q = directSearchQuery.trim();
+    if (!q) {
       setDirectResults([]);
       return;
     }
 
     const timer = window.setTimeout(() => {
-      searchPersonas(directSearchQuery.trim())
-        .then((data) => setDirectResults(data))
+      searchPersonas(q)
+        .then((data) => setDirectResults(Array.isArray(data) ? data : []))
         .catch(() => setDirectResults([]));
     }, 250);
 
@@ -288,42 +320,34 @@ export default function MensajeriaPage() {
   }, [directSearchQuery]);
 
   useEffect(() => {
-    if (!memberSearchQuery.trim()) {
-      setMemberResults([]);
-      return;
-    }
+    if (!token) return undefined;
 
-    const timer = window.setTimeout(() => {
-      searchPersonas(memberSearchQuery.trim())
-        .then((data) =>
-          setMemberResults(
-            data.filter(
-              (persona) => !selectedMembers.some((item) => item.id === persona.id),
-            ),
-          ),
-        )
-        .catch(() => setMemberResults([]));
-    }, 250);
+    return subscribeMessagingEvents(({ type, payload }) => {
+      if (!MESSAGING_EVENTS.has(type)) return;
 
-    return () => window.clearTimeout(timer);
-  }, [memberSearchQuery, selectedMembers]);
+      if (
+        type === "mensaje:grupo-eliminado" &&
+        Number(payload?.mensaje_id) === Number(selectedMessageId)
+      ) {
+        setSelectedMessageId(null);
+        setSelectedMessage(null);
+        setDetailError("El mensaje grupal fue eliminado del grupo.");
+      } else {
+        void refreshSelectedDetail();
+      }
 
-  useEffect(() => {
-    if (!token) return;
-
-    ensureMessagingSocket(token);
-    return subscribeMessagingEvents(() => {
-      loadFeed();
-      loadGroups();
-      if (selectedMessageId) {
-        getMessageDetail(selectedMessageId)
-          .then((data) => setSelectedMessage(data))
-          .catch(() => {});
+      void loadFeed();
+      if (
+        type === "mensaje:grupo" ||
+        type === "mensaje:grupo-eliminado" ||
+        type === "grupo:bienvenida" ||
+        type === "grupo:miembro-agregado" ||
+        type === "grupo:miembro-removido"
+      ) {
+        void loadGroups();
       }
     });
-  }, [token, selectedMessageId, loadFeed, loadGroups]);
-
-  const unreadInbox = inbox.filter((item) => !item.leido).length;
+  }, [token, selectedMessageId, loadFeed, loadGroups, refreshSelectedDetail]);
 
   function toggleGroupSelection(groupId) {
     setSelectedGroupIds((current) =>
@@ -333,17 +357,7 @@ export default function MensajeriaPage() {
     );
   }
 
-  function addMember(persona) {
-    setSelectedMembers((current) => [...current, persona]);
-    setMemberSearchQuery("");
-    setMemberResults([]);
-  }
-
-  function removeMember(personaId) {
-    setSelectedMembers((current) => current.filter((item) => item.id !== personaId));
-  }
-
-  async function attachLocation(setCoords, setStatus) {
+  function attachLocation(setCoords, setStatus) {
     if (!navigator.geolocation) {
       setStatus("Tu navegador no soporta geolocalización.");
       return;
@@ -428,6 +442,7 @@ export default function MensajeriaPage() {
         latitud: groupCoords?.latitud,
         longitud: groupCoords?.longitud,
       });
+
       setGroupMessage("");
       setGroupCoords(null);
       setGroupLocationState("");
@@ -447,56 +462,6 @@ export default function MensajeriaPage() {
     }
   }
 
-  async function handleCreateGroup(event) {
-    event.preventDefault();
-    setCreateGroupError("");
-    setCreateGroupSuccess("");
-
-    if (!createGroupForm.nombre.trim()) {
-      setCreateGroupError("El grupo debe tener un nombre.");
-      return;
-    }
-
-    if (selectedMembers.length < 2) {
-      setCreateGroupError("Agrega al menos 2 miembros además del creador.");
-      return;
-    }
-
-    setCreatingGroup(true);
-    try {
-      const group = await createCommunicationGroup({
-        ...createGroupForm,
-        nombre: createGroupForm.nombre.trim(),
-        descripcion: createGroupForm.descripcion.trim(),
-        imagen_url: createGroupForm.imagen_url.trim(),
-        miembro_ids: selectedMembers.map((member) => member.id),
-      });
-
-      setCreateGroupSuccess("Grupo creado correctamente.");
-      setCreateGroupForm({
-        nombre: "",
-        descripcion: "",
-        visibilidad: "publico",
-        imagen_url: "",
-      });
-      setSelectedMembers([]);
-      setMemberSearchQuery("");
-      setMemberResults([]);
-      setShowCreateGroup(false);
-      setSelectedGroupIds((current) =>
-        current.includes(group.id) ? current : [...current, group.id],
-      );
-      loadGroups();
-    } catch (error) {
-      setCreateGroupError(
-        error?.response?.data?.message ??
-          "No se pudo crear el grupo de comunicación.",
-      );
-    } finally {
-      setCreatingGroup(false);
-    }
-  }
-
   async function handleDeleteSelectedGroupMessage() {
     if (!selectedMessage?.grupo?.id) return;
     const confirmed = window.confirm(
@@ -508,6 +473,7 @@ export default function MensajeriaPage() {
       await deleteGroupMessage(selectedMessage.grupo.id, selectedMessage.id);
       setSelectedMessageId(null);
       setSelectedMessage(null);
+      setDetailError("");
       loadFeed();
     } catch (error) {
       setDetailError(
@@ -528,6 +494,7 @@ export default function MensajeriaPage() {
 
     const target = getMessageTarget(selectedMessage);
     if (!target?.id) return;
+
     setComposeMode("directo");
     setDirectRecipient(target);
     setDirectSearchQuery("");
@@ -535,37 +502,27 @@ export default function MensajeriaPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="mx-auto max-w-7xl">
       <NegPageHeader
-        eyebrow="HU 3-004 · 3-005 · 3-006 · 3-007"
+        eyebrow="HU 3-004 · HU 3-005"
         title="Comunicación y mensajería"
-        subtitle="Consulta tu bandeja, envía mensajes directos o a grupos, y crea grupos de comunicación con otros usuarios del sistema."
-        actions={
-          <div className="flex flex-wrap items-center gap-2">
-            <NegChip tone="primary" icon="mail">
-              {unreadInbox} no leído{unreadInbox === 1 ? "" : "s"}
-            </NegChip>
-            <NegButton
-              size="sm"
-              variant="tonal"
-              icon="groups"
-              onClick={() => setShowCreateGroup((current) => !current)}
-            >
-              {showCreateGroup ? "Ocultar grupo" : "Crear grupo"}
-            </NegButton>
-          </div>
-        }
+        subtitle="Consulta tu bandeja, envía mensajes directos o a grupos y revisa el estado de lectura en tiempo real."
+        actions={(
+          <NegChip tone="primary" icon="mail">
+            {unreadCount} no leído{unreadCount === 1 ? "" : "s"}
+          </NegChip>
+        )}
       />
 
-      <div className="grid grid-cols-1 xl:grid-cols-[360px_minmax(0,1fr)] gap-5">
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[360px_minmax(0,1fr)]">
         <div className="space-y-5">
           <NegCard>
-            <div className="flex items-center justify-between gap-3 mb-4">
+            <div className="mb-4 flex items-center justify-between gap-3">
               <div>
                 <h2 className="font-headline text-xl font-bold text-neg-on-surface">
                   Bandeja y enviados
                 </h2>
-                <p className="text-sm text-neg-on-surface-variant mt-1">
+                <p className="mt-1 text-sm text-neg-on-surface-variant">
                   Abre un mensaje para marcarlo como leído y responder desde el detalle.
                 </p>
               </div>
@@ -577,27 +534,28 @@ export default function MensajeriaPage() {
             </div>
 
             {feedTab === "recibidos" && (
-              <div className="grid grid-cols-1 gap-3 mb-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="mb-4 grid grid-cols-1 gap-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <label className="flex items-center gap-2 text-sm text-neg-on-surface">
                     <input
                       type="checkbox"
                       checked={filters.soloNoLeidos}
-                      onChange={(e) =>
+                      onChange={(event) =>
                         setFilters((current) => ({
                           ...current,
-                          soloNoLeidos: e.target.checked,
+                          soloNoLeidos: event.target.checked,
                         }))
                       }
                     />
                     Solo no leídos
                   </label>
+
                   <select
                     value={filters.tipo}
-                    onChange={(e) =>
+                    onChange={(event) =>
                       setFilters((current) => ({
                         ...current,
-                        tipo: e.target.value,
+                        tipo: event.target.value,
                       }))
                     }
                     className="h-11 rounded-xl border border-neg-outline-variant bg-neg-surface-container-lowest px-3 text-sm text-neg-on-surface"
@@ -607,15 +565,16 @@ export default function MensajeriaPage() {
                     <option value="grupo">Grupales</option>
                   </select>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <NegInput
                     type="date"
                     label="Desde"
                     value={filters.fechaDesde}
-                    onChange={(e) =>
+                    onChange={(event) =>
                       setFilters((current) => ({
                         ...current,
-                        fechaDesde: e.target.value,
+                        fechaDesde: event.target.value,
                       }))
                     }
                   />
@@ -623,10 +582,10 @@ export default function MensajeriaPage() {
                     type="date"
                     label="Hasta"
                     value={filters.fechaHasta}
-                    onChange={(e) =>
+                    onChange={(event) =>
                       setFilters((current) => ({
                         ...current,
-                        fechaHasta: e.target.value,
+                        fechaHasta: event.target.value,
                       }))
                     }
                   />
@@ -651,7 +610,7 @@ export default function MensajeriaPage() {
                 description="Cuando recibas o envíes mensajes, aparecerán aquí."
               />
             ) : (
-              <div className="space-y-3 max-h-[740px] overflow-y-auto pr-1">
+              <div className="max-h-[740px] space-y-3 overflow-y-auto pr-1">
                 {currentFeed.map((message) => (
                   <MessageListItem
                     key={`${feedTab}-${message.id}`}
@@ -665,13 +624,13 @@ export default function MensajeriaPage() {
           </NegCard>
 
           <NegCard>
-            <div className="flex items-center justify-between gap-3 mb-4">
+            <div className="mb-4 flex items-center justify-between gap-3">
               <div>
                 <h2 className="font-headline text-xl font-bold text-neg-on-surface">
                   Mis grupos
                 </h2>
-                <p className="text-sm text-neg-on-surface-variant mt-1">
-                  Selecciona grupos para enviar mensajes o revisar sus miembros.
+                <p className="mt-1 text-sm text-neg-on-surface-variant">
+                  Selecciona uno o varios grupos de los que eres miembro para comunicar novedades.
                 </p>
               </div>
               <NegChip tone="secondary">{groups.length} grupos</NegChip>
@@ -691,7 +650,7 @@ export default function MensajeriaPage() {
               <NegEmptyState
                 icon="groups"
                 title="Sin grupos activos"
-                description="Crea un grupo de comunicación o espera a ser agregado a uno."
+                description="Cuando pertenezcas a un grupo, aparecerá aquí para enviar mensajes grupales."
               />
             ) : (
               <div className="space-y-3">
@@ -713,18 +672,24 @@ export default function MensajeriaPage() {
 
         <div className="space-y-5">
           <NegCard>
-            <div className="flex items-center justify-between gap-3 mb-4">
+            <div className="mb-4 flex items-center justify-between gap-3">
               <div>
                 <h2 className="font-headline text-xl font-bold text-neg-on-surface">
                   Detalle del mensaje
                 </h2>
-                <p className="text-sm text-neg-on-surface-variant mt-1">
+                <p className="mt-1 text-sm text-neg-on-surface-variant">
                   Al abrir un mensaje recibido se marca automáticamente como leído.
                 </p>
               </div>
+
               {selectedMessage && (
                 <div className="flex flex-wrap gap-2">
-                  <NegButton size="sm" variant="outlined" icon="reply" onClick={prepareReply}>
+                  <NegButton
+                    size="sm"
+                    variant="outlined"
+                    icon="reply"
+                    onClick={prepareReply}
+                  >
                     Responder
                   </NegButton>
                   {selectedMessage.tipo === "grupo" && selectedMessage.puede_eliminar && (
@@ -759,22 +724,24 @@ export default function MensajeriaPage() {
               />
             ) : (
               <div className="space-y-5">
-                <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex flex-wrap items-center gap-2">
                   <NegChip tone={selectedMessage.tipo === "grupo" ? "secondary" : "primary"}>
                     {selectedMessage.tipo === "grupo" ? "Mensaje grupal" : "Mensaje directo"}
                   </NegChip>
                   <NegChip tone={selectedMessage.leido ? "success" : "warning"}>
                     {selectedMessage.leido ? "Leído" : "Pendiente"}
                   </NegChip>
-                  <NegChip tone="neutral">{formatDateTime(selectedMessage.fecha_envio)}</NegChip>
+                  <NegChip tone="neutral">
+                    {formatDateTime(selectedMessage.fecha_envio)}
+                  </NegChip>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                   <NegCard variant="subtle" padding="sm">
-                    <p className="text-xs uppercase tracking-wider font-semibold text-neg-on-surface-variant">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-neg-on-surface-variant">
                       Emisor
                     </p>
-                    <p className="font-semibold text-neg-on-surface mt-1">
+                    <p className="mt-1 font-semibold text-neg-on-surface">
                       {selectedMessage.emisor?.nombre_completo}
                     </p>
                     <p className="text-sm text-neg-on-surface-variant">
@@ -782,10 +749,10 @@ export default function MensajeriaPage() {
                     </p>
                   </NegCard>
                   <NegCard variant="subtle" padding="sm">
-                    <p className="text-xs uppercase tracking-wider font-semibold text-neg-on-surface-variant">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-neg-on-surface-variant">
                       Destino
                     </p>
-                    <p className="font-semibold text-neg-on-surface mt-1">
+                    <p className="mt-1 font-semibold text-neg-on-surface">
                       {selectedMessage.tipo === "grupo"
                         ? selectedMessage.grupo?.nombre
                         : selectedMessage.destinatario?.nombre_completo}
@@ -798,18 +765,38 @@ export default function MensajeriaPage() {
                   </NegCard>
                 </div>
 
+                {selectedMessage.tipo === "grupo" && selectedMessage.enviado_por_mi && (
+                  <div className="rounded-2xl border border-neg-outline-variant/40 bg-neg-surface-container-lowest px-4 py-3 text-sm text-neg-on-surface-variant">
+                    {selectedMessage.total_destinatarios ?? 0} destinatario
+                    {(selectedMessage.total_destinatarios ?? 0) === 1 ? "" : "s"} ·{" "}
+                    {selectedMessage.total_leidos ?? 0} lectura
+                    {(selectedMessage.total_leidos ?? 0) === 1 ? "" : "s"} registrada
+                    {(selectedMessage.total_leidos ?? 0) === (selectedMessage.total_destinatarios ?? -1)
+                      ? ". Todos lo han leído."
+                      : ". Aún hay miembros pendientes por leerlo."}
+                  </div>
+                )}
+
+                {selectedMessage.tipo === "directo" && selectedMessage.enviado_por_mi && (
+                  <div className="rounded-2xl border border-neg-outline-variant/40 bg-neg-surface-container-lowest px-4 py-3 text-sm text-neg-on-surface-variant">
+                    {selectedMessage.leido
+                      ? `El destinatario leyó este mensaje el ${formatDateTime(selectedMessage.leido_en)}.`
+                      : "El destinatario aún no ha leído este mensaje."}
+                  </div>
+                )}
+
                 <div>
-                  <p className="text-sm font-semibold text-neg-on-surface mb-2">
+                  <p className="mb-2 text-sm font-semibold text-neg-on-surface">
                     Contenido
                   </p>
-                  <div className="rounded-2xl border border-neg-outline-variant/40 bg-neg-surface-container-lowest px-4 py-4 text-sm text-neg-on-surface whitespace-pre-wrap leading-relaxed">
+                  <div className="whitespace-pre-wrap rounded-2xl border border-neg-outline-variant/40 bg-neg-surface-container-lowest px-4 py-4 text-sm leading-relaxed text-neg-on-surface">
                     {selectedMessage.contenido}
                   </div>
                 </div>
 
                 {(selectedMessage.latitud != null || selectedMessage.longitud != null) && (
                   <div>
-                    <p className="text-sm font-semibold text-neg-on-surface mb-2">
+                    <p className="mb-2 text-sm font-semibold text-neg-on-surface">
                       Ubicación adjunta
                     </p>
                     <div className="flex flex-wrap gap-2">
@@ -825,7 +812,7 @@ export default function MensajeriaPage() {
 
                 {selectedMessage.tipo === "grupo" && (
                   <div>
-                    <div className="flex items-center justify-between gap-3 mb-3">
+                    <div className="mb-3 flex items-center justify-between gap-3">
                       <p className="text-sm font-semibold text-neg-on-surface">
                         Lecturas del grupo
                       </p>
@@ -835,18 +822,19 @@ export default function MensajeriaPage() {
                         {selectedMessage.lecturas?.length ?? 0}
                       </NegChip>
                     </div>
+
                     {selectedMessage.lecturas?.length ? (
                       <div className="space-y-2">
                         {selectedMessage.lecturas.map((reader) => (
                           <div
                             key={`${selectedMessage.id}-${reader.id}`}
-                            className="rounded-xl border border-neg-outline-variant/40 bg-neg-surface-container-lowest px-4 py-3 flex items-center justify-between gap-3"
+                            className="flex items-center justify-between gap-3 rounded-xl border border-neg-outline-variant/40 bg-neg-surface-container-lowest px-4 py-3"
                           >
-                            <div>
+                            <div className="min-w-0">
                               <p className="font-medium text-neg-on-surface">
                                 {reader.nombre_completo}
                               </p>
-                              <p className="text-xs text-neg-on-surface-variant">
+                              <p className="truncate text-xs text-neg-on-surface-variant">
                                 {reader.email} · {reader.rol}
                               </p>
                             </div>
@@ -870,12 +858,12 @@ export default function MensajeriaPage() {
           </NegCard>
 
           <NegCard>
-            <div className="flex items-center justify-between gap-3 mb-4">
+            <div className="mb-4 flex items-center justify-between gap-3">
               <div>
                 <h2 className="font-headline text-xl font-bold text-neg-on-surface">
                   Redactar mensaje
                 </h2>
-                <p className="text-sm text-neg-on-surface-variant mt-1">
+                <p className="mt-1 text-sm text-neg-on-surface-variant">
                   Elige si enviarás un mensaje privado o a uno o varios grupos.
                 </p>
               </div>
@@ -891,13 +879,13 @@ export default function MensajeriaPage() {
                 <NegInput
                   label="Buscar persona por nombre o email"
                   value={directSearchQuery}
-                  onChange={(e) => setDirectSearchQuery(e.target.value)}
+                  onChange={(event) => setDirectSearchQuery(event.target.value)}
                   placeholder="Ej. Ana, Pedro, correo@ejemplo.com"
                   iconStart="search"
                 />
 
                 {directRecipient && (
-                  <div className="flex items-center gap-2 flex-wrap">
+                  <div className="flex flex-wrap items-center gap-2">
                     <NegChip tone="primary" icon="person">
                       {directRecipient.nombre_completo}
                     </NegChip>
@@ -912,12 +900,12 @@ export default function MensajeriaPage() {
                 )}
 
                 {!directRecipient && directResults.length > 0 && (
-                  <div className="rounded-2xl border border-neg-outline-variant/40 bg-neg-surface-container-lowest divide-y divide-neg-outline-variant/20 overflow-hidden">
+                  <div className="overflow-hidden rounded-2xl border border-neg-outline-variant/40 bg-neg-surface-container-lowest divide-y divide-neg-outline-variant/20">
                     {directResults.map((persona) => (
                       <button
                         key={persona.id}
                         type="button"
-                        className="w-full px-4 py-3 text-left hover:bg-neg-primary/5 transition-colors"
+                        className="w-full px-4 py-3 text-left transition-colors hover:bg-neg-primary/5"
                         onClick={() => {
                           setDirectRecipient(persona);
                           setDirectSearchQuery("");
@@ -939,7 +927,7 @@ export default function MensajeriaPage() {
                   label="Mensaje"
                   rows={5}
                   value={directMessage}
-                  onChange={(e) => setDirectMessage(e.target.value)}
+                  onChange={(event) => setDirectMessage(event.target.value)}
                   placeholder="Escribe tu mensaje privado..."
                   hint={`${directMessage.length}/500 caracteres`}
                   maxLength={500}
@@ -992,7 +980,7 @@ export default function MensajeriaPage() {
             ) : (
               <form onSubmit={handleSendGroup} className="space-y-4">
                 <div>
-                  <p className="text-sm font-semibold text-neg-on-surface mb-2">
+                  <p className="mb-2 text-sm font-semibold text-neg-on-surface">
                     Selecciona uno o varios grupos
                   </p>
                   {groups.length === 0 ? (
@@ -1000,7 +988,7 @@ export default function MensajeriaPage() {
                       Aún no perteneces a ningún grupo.
                     </p>
                   ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                       {groups.map((group) => (
                         <GroupSelectionCard
                           key={`compose-${group.id}`}
@@ -1017,7 +1005,7 @@ export default function MensajeriaPage() {
                   label="Mensaje al grupo"
                   rows={5}
                   value={groupMessage}
-                  onChange={(e) => setGroupMessage(e.target.value)}
+                  onChange={(event) => setGroupMessage(event.target.value)}
                   placeholder="Comparte retrasos, cambios de ruta o novedades para los pasajeros..."
                   hint={`${groupMessage.length}/500 caracteres`}
                   maxLength={500}
@@ -1069,154 +1057,6 @@ export default function MensajeriaPage() {
               </form>
             )}
           </NegCard>
-
-          {showCreateGroup && (
-            <NegCard>
-              <div className="flex items-center justify-between gap-3 mb-4">
-                <div>
-                  <h2 className="font-headline text-xl font-bold text-neg-on-surface">
-                    Crear grupo de comunicación
-                  </h2>
-                  <p className="text-sm text-neg-on-surface-variant mt-1">
-                    Agrega al menos 2 miembros, define la visibilidad y deja listo el grupo para mensajería.
-                  </p>
-                </div>
-                <NegButton
-                  size="sm"
-                  variant="text"
-                  icon="close"
-                  onClick={() => setShowCreateGroup(false)}
-                >
-                  Cerrar
-                </NegButton>
-              </div>
-
-              <form onSubmit={handleCreateGroup} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <NegInput
-                    label="Nombre del grupo"
-                    value={createGroupForm.nombre}
-                    onChange={(e) =>
-                      setCreateGroupForm((current) => ({
-                        ...current,
-                        nombre: e.target.value,
-                      }))
-                    }
-                    placeholder="Ej. Ruta Norte 7AM"
-                  />
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-medium text-neg-on-surface-variant">
-                      Visibilidad
-                    </label>
-                    <select
-                      value={createGroupForm.visibilidad}
-                      onChange={(e) =>
-                        setCreateGroupForm((current) => ({
-                          ...current,
-                          visibilidad: e.target.value,
-                        }))
-                      }
-                      className="h-11 rounded-xl border border-neg-outline-variant bg-neg-surface-container-lowest px-3 text-sm text-neg-on-surface"
-                    >
-                      <option value="publico">Público</option>
-                      <option value="privado">Privado</option>
-                    </select>
-                  </div>
-                </div>
-
-                <NegTextarea
-                  label="Descripción"
-                  rows={3}
-                  value={createGroupForm.descripcion}
-                  onChange={(e) =>
-                    setCreateGroupForm((current) => ({
-                      ...current,
-                      descripcion: e.target.value,
-                    }))
-                  }
-                  placeholder="¿Para qué sirve este grupo?"
-                />
-
-                <NegInput
-                  label="Imagen o ícono (URL opcional)"
-                  value={createGroupForm.imagen_url}
-                  onChange={(e) =>
-                    setCreateGroupForm((current) => ({
-                      ...current,
-                      imagen_url: e.target.value,
-                    }))
-                  }
-                  placeholder="https://..."
-                  iconStart="image"
-                />
-
-                <NegInput
-                  label="Buscar personas por nombre o email"
-                  value={memberSearchQuery}
-                  onChange={(e) => setMemberSearchQuery(e.target.value)}
-                  placeholder="Busca personas para agregarlas al grupo"
-                  iconStart="search"
-                />
-
-                {selectedMembers.length > 0 && (
-                  <div className="flex flex-wrap gap-2">
-                    {selectedMembers.map((member) => (
-                      <button
-                        key={member.id}
-                        type="button"
-                        onClick={() => removeMember(member.id)}
-                        className="inline-flex items-center gap-2 px-3 h-8 rounded-full bg-neg-primary-container text-neg-on-primary-container text-xs font-semibold"
-                      >
-                        {member.nombre_completo}
-                        <span className="material-symbols-outlined text-[14px]">close</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                {memberResults.length > 0 && (
-                  <div className="rounded-2xl border border-neg-outline-variant/40 bg-neg-surface-container-lowest divide-y divide-neg-outline-variant/20 overflow-hidden max-h-64 overflow-y-auto">
-                    {memberResults.map((persona) => (
-                      <button
-                        key={`member-${persona.id}`}
-                        type="button"
-                        className="w-full px-4 py-3 text-left hover:bg-neg-primary/5 transition-colors"
-                        onClick={() => addMember(persona)}
-                      >
-                        <p className="font-medium text-neg-on-surface">
-                          {persona.nombre_completo}
-                        </p>
-                        <p className="text-xs text-neg-on-surface-variant">
-                          {persona.email}
-                        </p>
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                {createGroupError && (
-                  <div className="rounded-xl border border-neg-error bg-neg-error-container/30 px-4 py-3 text-sm text-neg-error">
-                    {createGroupError}
-                  </div>
-                )}
-                {createGroupSuccess && (
-                  <div className="rounded-xl border border-neg-primary bg-neg-primary/10 px-4 py-3 text-sm text-neg-primary">
-                    {createGroupSuccess}
-                  </div>
-                )}
-
-                <div className="flex justify-end">
-                  <NegButton
-                    type="submit"
-                    icon={creatingGroup ? "hourglass_top" : "groups"}
-                    disabled={creatingGroup}
-                  >
-                    {creatingGroup ? "Creando..." : "Crear grupo"}
-                  </NegButton>
-                </div>
-              </form>
-            </NegCard>
-          )}
         </div>
       </div>
     </div>

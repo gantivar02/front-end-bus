@@ -52,7 +52,7 @@ import AdministrarGrupoPage from "../features/negocio/grupos/pages/AdministrarGr
 import CrearAlertaPage from "../features/negocio/alertas/pages/CrearAlertaPage";
 import MisAlertasEnviadasPage from "../features/negocio/alertas/pages/MisAlertasEnviadasPage";
 import MisNotificacionesPage from "../features/negocio/alertas/pages/MisNotificacionesPage";
-import MensajesDirectosPage from "../features/negocio/mensajeria/pages/MensajesDirectosPage";
+import MensajeriaPage from "../features/negocio/mensajeria/pages/MensajeriaPage";
 import AgendarCitaPage from "../features/negocio/citas/pages/AgendarCitaPage";
 import MisCitasPage from "../features/negocio/citas/pages/MisCitasPage";
 import DashboardPage from "../features/dashboard/pages/DashboardPage";
@@ -217,7 +217,7 @@ export const router = createBrowserRouter([
         path: "mensajes",
         element: (
           <RoleRoute allow={[ROL_CIUDADANO, ROL_CONDUCTOR]}>
-            <MensajesDirectosPage />
+            <MensajeriaPage />
           </RoleRoute>
         ),
       },
