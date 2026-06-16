@@ -1,24 +1,19 @@
-const GOOGLE_ONBOARDING_KEY = "googleOnboarding";
+// Wrappers de compatibilidad. El storage real ahora vive en
+// oauthOnboardingStorage y soporta los 3 proveedores OAuth.
+import {
+  clearOAuthOnboardingData,
+  getOAuthOnboardingData,
+  saveOAuthOnboardingData,
+} from "./oauthOnboardingStorage";
 
 export function saveGoogleOnboardingData(data) {
-  sessionStorage.setItem(GOOGLE_ONBOARDING_KEY, JSON.stringify(data));
+  saveOAuthOnboardingData({ ...data, provider: data.provider || "google" });
 }
 
 export function getGoogleOnboardingData() {
-  const rawValue = sessionStorage.getItem(GOOGLE_ONBOARDING_KEY);
-
-  if (!rawValue) {
-    return null;
-  }
-
-  try {
-    return JSON.parse(rawValue);
-  } catch {
-    sessionStorage.removeItem(GOOGLE_ONBOARDING_KEY);
-    return null;
-  }
+  return getOAuthOnboardingData();
 }
 
 export function clearGoogleOnboardingData() {
-  sessionStorage.removeItem(GOOGLE_ONBOARDING_KEY);
+  clearOAuthOnboardingData();
 }

@@ -17,7 +17,7 @@ import MainLayout from "../components/layout/MainLayout";
 import NegocioLayout from "../components/layout/negocio/NegocioLayout";
 import LoginPage from "../features/auth/pages/LoginPage";
 import RegisterPage from "../features/auth/pages/RegisterPage";
-import GoogleCompleteProfilePage from "../features/auth/pages/GoogleCompleteProfilePage";
+import OAuthCompleteProfilePage from "../features/auth/pages/OAuthCompleteProfilePage";
 import GithubCallbackPage from "../features/auth/pages/GithubCallbackPage";
 import ForgotPasswordPage from "../features/auth/pages/ForgotPasswordPage";
 import ResetPasswordPage from "../features/auth/pages/ResetPasswordPage";
@@ -69,8 +69,21 @@ export const router = createBrowserRouter([
   { path: "/login", element: <LoginPage /> },
   { path: "/register", element: <RegisterPage /> },
   {
+    path: "/auth/oauth/complete-profile",
+    element: <OAuthCompleteProfilePage />,
+  },
+  // Compat: rutas viejas por proveedor mantenidas como alias.
+  {
     path: "/auth/google/complete-profile",
-    element: <GoogleCompleteProfilePage />,
+    element: <OAuthCompleteProfilePage />,
+  },
+  {
+    path: "/auth/github/complete-profile",
+    element: <OAuthCompleteProfilePage />,
+  },
+  {
+    path: "/auth/microsoft/complete-profile",
+    element: <OAuthCompleteProfilePage />,
   },
   { path: "/auth/github/callback", element: <GithubCallbackPage /> },
   { path: "/forgot-password", element: <ForgotPasswordPage /> },

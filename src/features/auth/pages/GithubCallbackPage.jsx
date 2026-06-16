@@ -2,7 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
 import api from "../../../services/api";
-import { clearGoogleOnboardingData } from "../services/googleOnboardingStorage";
+import {
+  clearOAuthOnboardingData,
+  saveOAuthOnboardingData,
+} from "../services/oauthOnboardingStorage";
 
 // HU-006: GitHub redirige aquí con ?code=XXXX después de que el usuario autoriza
 export default function GithubCallbackPage() {
@@ -31,8 +34,20 @@ export default function GithubCallbackPage() {
         }
       )
       .then((res) => {
-        clearGoogleOnboardingData();
-        login(res.data.token);
+        const data = res.data;
+        if (data?.requiresProfileCompletion) {
+          saveOAuthOnboardingData({
+            onboardingToken: data.onboardingToken,
+            userId: data.userId,
+            email: data.email,
+            name: data.name,
+            provider: data.provider || "github",
+          });
+          navigate("/auth/oauth/complete-profile", { replace: true });
+          return;
+        }
+        clearOAuthOnboardingData();
+        login(data.token);
         navigate("/", { replace: true });
       })
       .catch((err) => {

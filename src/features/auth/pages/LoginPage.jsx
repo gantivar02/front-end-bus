@@ -7,9 +7,9 @@ import LoginMicrosoft from "../components/LoginMicrosoft";
 import LoginGoogle from "../components/LoginGoogle";
 import LoginGithub from "../components/LoginGithub";
 import {
-  clearGoogleOnboardingData,
-  saveGoogleOnboardingData,
-} from "../services/googleOnboardingStorage";
+  clearOAuthOnboardingData,
+  saveOAuthOnboardingData,
+} from "../services/oauthOnboardingStorage";
 
 const publicAuthConfig = { skipAuth: true, skipAuthRedirect: true };
 
@@ -118,7 +118,7 @@ export default function LoginPage() {
         { sessionId: twoFAData.sessionId, code },
         publicAuthConfig
       );
-      clearGoogleOnboardingData();
+      clearOAuthOnboardingData();
       login(response.data.token);
       navigate("/");
     } catch (err) {
@@ -164,21 +164,21 @@ export default function LoginPage() {
     }
   };
 
-  const handleGoogleSuccess = (token) => {
-    clearGoogleOnboardingData();
+  const handleOAuthSuccess = (token) => {
+    clearOAuthOnboardingData();
     login(token);
     navigate("/");
   };
 
-  const handleGoogleRequiresProfileCompletion = (data) => {
-    saveGoogleOnboardingData({
+  const handleOAuthRequiresProfileCompletion = (data) => {
+    saveOAuthOnboardingData({
       onboardingToken: data.onboardingToken,
       userId: data.userId,
       email: data.email,
       name: data.name,
       provider: data.provider,
     });
-    navigate("/auth/google/complete-profile");
+    navigate("/auth/oauth/complete-profile");
   };
 
   const formatTime = (seconds) => {
@@ -291,16 +291,13 @@ export default function LoginPage() {
             {/* OAuth buttons — uniform style */}
             <div className="grid grid-cols-3 gap-3">
               <LoginGoogle
-                onSuccess={handleGoogleSuccess}
-                onRequiresProfileCompletion={handleGoogleRequiresProfileCompletion}
+                onSuccess={handleOAuthSuccess}
+                onRequiresProfileCompletion={handleOAuthRequiresProfileCompletion}
               />
               <LoginGithub />
               <LoginMicrosoft
-                onSuccess={(token) => {
-                  clearGoogleOnboardingData();
-                  login(token);
-                  navigate("/");
-                }}
+                onSuccess={handleOAuthSuccess}
+                onRequiresProfileCompletion={handleOAuthRequiresProfileCompletion}
               />
             </div>
 
