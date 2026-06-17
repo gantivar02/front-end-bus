@@ -1,0 +1,55 @@
+name: CI/CD front-end
+
+on:
+  push:
+    branches: [main]
+
+env:
+  IMAGE_NAME: juancho8/bi-front
+
+jobs:
+  build-and-push:
+    name: Build & Push Docker Image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          # Vite hornea estas URLs HTTPS en el build (apuntan al Caddy).
+          # Son URLs publicas, por eso van en claro (no secretos).
+          build-args: |
+            VITE_MS_NEGOCIO_URL=https://api.buses.45-8-132-244.sslip.io/api
+            VITE_MS_NEGOCIO_STATIC_URL=https://api.buses.45-8-132-244.sslip.io
+            VITE_MS_SECURITY_URL=https://auth.buses.45-8-132-244.sslip.io/api
+            VITE_RECAPTCHA_SITE_KEY=6Le9sLUsAAAAABlO6tBKE9_KPItIPDE7tQWrp8Sp
+          tags: |
+            ${{ env.IMAGE_NAME }}:latest
+            ${{ env.IMAGE_NAME }}:${{ github.sha }}
+
+  deploy:
+    name: Deploy to VPS
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    steps:
+      - name: Deploy front-end
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            cd /opt/buses-inteligentes
+            docker compose pull front-end
+            docker compose up -d --no-deps front-end
+            docker image prune -f

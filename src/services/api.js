@@ -1,7 +1,10 @@
 import axios from "axios";
 import { storage } from "../utils/storage";
 
-export const API_BASE_URL = "http://localhost:8081/api";
+// En dev usa localhost; en produccion Vite hornea VITE_MS_SECURITY_URL
+// (ej. http://45.8.132.244:8081/api) durante el build.
+export const API_BASE_URL =
+  import.meta.env.VITE_MS_SECURITY_URL ?? "http://localhost:8081/api";
 
 const api = axios.create({
   baseURL: API_BASE_URL,
