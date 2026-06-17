@@ -1,0 +1,6 @@
+node_modules
+dist
+.git
+.env
+*.log
+UI_Negocio_v2
