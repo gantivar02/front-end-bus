@@ -2,7 +2,14 @@ import { useEffect, useRef, useState } from "react";
 import { NegPageHeader, NegCard } from "../../../../components/negocio";
 import PanelMapa from "../components/PanelMapa";
 import { getDashboard } from "../panelService";
+import {
+  joinFlota,
+  leaveFlota,
+  subscribeSeguimiento,
+} from "../../seguimiento/seguimientoRealtime";
 
+// Las posiciones de los buses llegan en vivo por WebSocket; la ocupacion
+// e incidentes (que cambian lento) se siguen refrescando por este intervalo.
 const INTERVALO_SEG = 30;
 
 const GRAVEDAD_COLOR = {
@@ -46,6 +53,41 @@ export default function PanelControlPage() {
     return () => {
       clearInterval(fetchRef.current);
       clearInterval(countdownRef.current);
+    };
+  }, []);
+
+  // Posiciones de la flota en vivo por WebSocket (HU 3-002). Mezcla solo
+  // lat/lon/senal de cada bus por bus_id, conservando ocupacion/incidentes.
+  useEffect(() => {
+    joinFlota();
+    const unsub = subscribeSeguimiento(({ type, payload }) => {
+      if (type !== "gps:flota") return;
+      const posiciones = Array.isArray(payload?.buses) ? payload.buses : [];
+      if (!posiciones.length) return;
+      const byId = new Map(posiciones.map((b) => [b.bus_id, b]));
+      setDatos((prev) => {
+        if (!prev?.buses) return prev;
+        return {
+          ...prev,
+          buses: prev.buses.map((b) => {
+            const p = byId.get(b.bus_id);
+            return p
+              ? {
+                  ...b,
+                  latitud: p.latitud,
+                  longitud: p.longitud,
+                  sin_senal: p.sin_senal,
+                  muy_retrasado: p.muy_retrasado,
+                }
+              : b;
+          }),
+        };
+      });
+      setUltimaActualizacion(new Date());
+    });
+    return () => {
+      unsub();
+      leaveFlota();
     };
   }, []);
 

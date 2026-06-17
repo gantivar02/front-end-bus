@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { NegPageHeader, NegCard } from "../../../../components/negocio";
 import SeguimientoMapa from "../components/SeguimientoMapa";
 import {
@@ -6,8 +6,32 @@ import {
   listParaderosPorRuta,
   getSeguimiento,
 } from "../seguimientoService";
+import {
+  joinRuta,
+  leaveRuta,
+  subscribeSeguimiento,
+} from "../seguimientoRealtime";
 
-const INTERVALO_SEG = 10;
+// Calcula el tiempo estimado al paradero objetivo EN EL CLIENTE, usando el
+// paradero mas cercano al bus (con su orden) y los tiempos de cada tramo.
+// Misma logica que el backend, pero asi el ETA funciona con las posiciones
+// que llegan en vivo por WebSocket (que no traen el paradero del usuario).
+function computeEta(bus, paraderos, targetParaderoId) {
+  if (!bus.paradero_cercano || targetParaderoId == null) return null;
+  const target = paraderos.find((rp) => rp.paradero.id === targetParaderoId);
+  if (!target) return null;
+  const nearestOrden = bus.paradero_cercano.orden;
+  if (nearestOrden == null) return null;
+  if (nearestOrden > target.orden) return 0;
+  if (nearestOrden === target.orden) {
+    return bus.paradero_cercano.distancia_m <= 200
+      ? 0
+      : target.tiempo_estimado_min;
+  }
+  return paraderos
+    .filter((rp) => rp.orden > nearestOrden && rp.orden <= target.orden)
+    .reduce((sum, rp) => sum + rp.tiempo_estimado_min, 0);
+}
 
 export default function SeguimientoPage() {
   const [rutas, setRutas] = useState([]);
@@ -18,11 +42,8 @@ export default function SeguimientoPage() {
   const [buses, setBuses] = useState([]);
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState(null);
-  const [countdown, setCountdown] = useState(INTERVALO_SEG);
+  const [enVivo, setEnVivo] = useState(false);
   const [ultimaActualizacion, setUltimaActualizacion] = useState(null);
-
-  const countdownRef = useRef(null);
-  const fetchRef = useRef(null);
 
   useEffect(() => {
     listRutas()
@@ -39,43 +60,50 @@ export default function SeguimientoPage() {
       .catch(() => {});
   }, [rutaId]);
 
+  // Posiciones en tiempo real por WebSocket (HU 3-001).
+  // NOTA: no depende de paraderoId — el ETA se calcula en el cliente, asi
+  // que cambiar de paradero no re-suscribe ni vuelve a pedir datos.
   useEffect(() => {
     if (!rutaId) {
       setBuses([]);
       setError(null);
+      setEnVivo(false);
       return;
     }
 
-    const fetchData = () => {
-      setCargando(true);
-      setError(null);
-      getSeguimiento(rutaId, paraderoId || undefined)
-        .then((data) => {
-          setBuses(Array.isArray(data) ? data : []);
-          setUltimaActualizacion(new Date());
-          setCountdown(INTERVALO_SEG);
-        })
-        .catch((err) =>
-          setError(err?.response?.data?.message ?? "No se pudo obtener la ubicación de los buses."),
-        )
-        .finally(() => setCargando(false));
-    };
+    const rid = Number(rutaId);
 
-    fetchData();
-    clearInterval(fetchRef.current);
-    clearInterval(countdownRef.current);
+    // 1. Carga inicial por REST para que el mapa aparezca al instante.
+    setCargando(true);
+    setError(null);
+    getSeguimiento(rid)
+      .then((data) => {
+        setBuses(Array.isArray(data) ? data : []);
+        setUltimaActualizacion(new Date());
+      })
+      .catch((err) =>
+        setError(
+          err?.response?.data?.message ??
+            "No se pudo obtener la ubicación de los buses.",
+        ),
+      )
+      .finally(() => setCargando(false));
 
-    fetchRef.current = setInterval(fetchData, INTERVALO_SEG * 1000);
-    countdownRef.current = setInterval(
-      () => setCountdown((c) => (c > 1 ? c - 1 : INTERVALO_SEG)),
-      1000,
-    );
+    // 2. Suscripcion en vivo: el servidor empuja las posiciones por WS.
+    joinRuta(rid).then(() => setEnVivo(true));
+    const unsub = subscribeSeguimiento(({ type, payload }) => {
+      if (type === "gps:seguimiento" && Number(payload?.ruta_id) === rid) {
+        setBuses(Array.isArray(payload.buses) ? payload.buses : []);
+        setUltimaActualizacion(new Date());
+      }
+    });
 
     return () => {
-      clearInterval(fetchRef.current);
-      clearInterval(countdownRef.current);
+      unsub();
+      leaveRuta(rid);
+      setEnVivo(false);
     };
-  }, [rutaId, paraderoId]);
+  }, [rutaId]);
 
   const busesConAlerta = buses.filter((b) => b.sin_senal || b.muy_retrasado);
   const selectedParaderoId = paraderoId ? Number(paraderoId) : undefined;
@@ -89,7 +117,7 @@ export default function SeguimientoPage() {
       <NegPageHeader
         eyebrow="HU 3-001"
         title="Seguimiento en tiempo real"
-        subtitle="Monitoreá la ubicación actual de los buses de una ruta. El mapa se actualiza automáticamente cada 10 segundos."
+        subtitle="Monitoreá la ubicación actual de los buses de una ruta. El mapa se actualiza en tiempo real vía WebSocket."
       />
 
       {/* Selectores */}
@@ -147,8 +175,8 @@ export default function SeguimientoPage() {
               </span>
             </div>
             <div className="flex items-center gap-2 text-xs text-neg-on-surface-variant">
-              <span className="material-symbols-outlined text-[16px]">autorenew</span>
-              <span>Actualiza en {countdown}s</span>
+              <span className={`material-symbols-outlined text-[16px] ${enVivo ? "text-green-500" : ""}`}>sensors</span>
+              <span>{enVivo ? "En vivo" : "Conectando…"}</span>
               {ultimaActualizacion && (
                 <span className="hidden sm:inline">
                   · Última:{" "}
@@ -227,7 +255,9 @@ export default function SeguimientoPage() {
                 </div>
               </NegCard>
             ) : (
-              buses.map((bus) => (
+              buses.map((bus) => {
+                const eta = computeEta(bus, paraderos, selectedParaderoId);
+                return (
                 <NegCard key={bus.bus_id} padding="sm">
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <div>
@@ -261,18 +291,19 @@ export default function SeguimientoPage() {
                     </div>
                   )}
 
-                  {bus.tiempo_al_paradero_min != null && (
+                  {eta != null && (
                     <div className="flex items-center gap-1.5 text-xs text-neg-primary font-semibold mt-1">
                       <span className="material-symbols-outlined text-[14px]">schedule</span>
                       <span>
-                        {bus.tiempo_al_paradero_min === 0
+                        {eta === 0
                           ? "Ya pasó por tu paradero"
-                          : `≈ ${bus.tiempo_al_paradero_min} min para llegar a tu paradero`}
+                          : `≈ ${eta} min para llegar a tu paradero`}
                       </span>
                     </div>
                   )}
                 </NegCard>
-              ))
+                );
+              })
             )}
           </div>
         </div>
