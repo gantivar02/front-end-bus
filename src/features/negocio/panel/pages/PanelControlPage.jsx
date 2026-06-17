@@ -237,7 +237,7 @@ export default function PanelControlPage() {
           </div>
 
           {/* Alertas de ocupación máxima */}
-          {busesConIncidente > 0 && (
+          {busesOcupacionMaxima > 0 && (
             <div>
               <p className="text-xs font-bold uppercase tracking-widest text-neg-on-surface-variant mb-2">
                 Alertas de ocupación

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { NegPageHeader, NegCard, NegButton } from "../../../../components/negocio";
-import { getClimaPerfi, updateClimaPerfil } from "../climaPerfilService";
+import { getClimaPerfi, updateClimaPerfil, testEnvioClima } from "../climaPerfilService";
 
 const CANALES = [
   { value: "email", label: "Email", icon: "email" },
@@ -14,11 +14,14 @@ export default function PerfilClimaPage() {
     alertas_clima_activas: false,
     horario_viaje: "07:00",
     canal_notificacion_preferido: "email",
+    ciudad: "",
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState(null);
+  const [testing, setTesting] = useState(false);
+  const [tested, setTested] = useState(false);
 
   useEffect(() => {
     getClimaPerfi()
@@ -28,6 +31,7 @@ export default function PerfilClimaPage() {
           alertas_clima_activas: data.alertas_clima_activas ?? false,
           horario_viaje: data.horario_viaje?.slice(0, 5) ?? "07:00",
           canal_notificacion_preferido: data.canal_notificacion_preferido ?? "email",
+          ciudad: data.ciudad ?? "",
         });
       })
       .catch(() => setError("No se pudo cargar el perfil."))
@@ -67,24 +71,22 @@ export default function PerfilClimaPage() {
         subtitle="Recibí el pronóstico del tiempo cada mañana antes de tu viaje."
       />
 
-      {perfil?.ciudad && (
-        <NegCard padding="sm" className="mb-4 flex items-center gap-3">
-          <span className="material-symbols-outlined text-[24px] text-neg-primary">location_city</span>
-          <div>
-            <p className="text-xs text-neg-on-surface-variant">Ciudad configurada</p>
-            <p className="text-sm font-semibold text-neg-on-surface">{perfil.ciudad}</p>
-          </div>
-        </NegCard>
-      )}
-
-      {!perfil?.ciudad && (
-        <NegCard className="mb-4 border border-yellow-400" padding="sm">
-          <div className="flex items-center gap-2 text-sm text-yellow-700">
-            <span className="material-symbols-outlined text-[18px]">warning</span>
-            No tenés ciudad configurada en tu perfil. Contactá al administrador para agregar tu ciudad y recibir el clima correcto.
-          </div>
-        </NegCard>
-      )}
+      <NegCard padding="sm" className="mb-4">
+        <label className="block text-sm font-medium text-neg-on-surface mb-1.5">
+          <span className="material-symbols-outlined text-[16px] align-middle mr-1">location_city</span>
+          Tu ciudad
+        </label>
+        <input
+          type="text"
+          placeholder="Ej: Manizales, Bogotá, Medellín..."
+          value={form.ciudad}
+          onChange={(e) => setForm((f) => ({ ...f, ciudad: e.target.value }))}
+          className="w-full px-3 py-2.5 rounded-xl border border-neg-outline bg-neg-surface text-neg-on-surface text-sm focus:outline-none focus:border-neg-primary focus:ring-2 focus:ring-neg-primary/20"
+        />
+        <p className="text-xs text-neg-on-surface-variant mt-1">
+          Se usa para consultar el pronóstico del clima de tu zona.
+        </p>
+      </NegCard>
 
       <NegCard>
         {/* Toggle alertas */}
@@ -148,11 +150,6 @@ export default function PerfilClimaPage() {
                   </button>
                 ))}
               </div>
-              {form.canal_notificacion_preferido !== "email" && (
-                <p className="text-xs text-neg-on-surface-variant mt-2">
-                  * Por ahora solo el canal Email está disponible.
-                </p>
-              )}
             </div>
 
             {/* Preview mensaje */}
@@ -188,7 +185,7 @@ export default function PerfilClimaPage() {
           </div>
         )}
 
-        <div className="mt-6 pt-5 border-t border-neg-outline-variant">
+        <div className="mt-6 pt-5 border-t border-neg-outline-variant flex flex-wrap gap-3">
           <NegButton
             icon={saving ? "hourglass_top" : "save"}
             onClick={handleSave}
@@ -196,7 +193,33 @@ export default function PerfilClimaPage() {
           >
             {saving ? "Guardando..." : "Guardar configuración"}
           </NegButton>
+          <NegButton
+            icon={testing ? "hourglass_top" : "send"}
+            onClick={async () => {
+              setTesting(true);
+              setTested(false);
+              setError(null);
+              try {
+                await testEnvioClima();
+                setTested(true);
+              } catch {
+                setError("No se pudo enviar la prueba.");
+              } finally {
+                setTesting(false);
+              }
+            }}
+            disabled={testing}
+            variant="outlined"
+          >
+            {testing ? "Enviando..." : "Probar ahora"}
+          </NegButton>
         </div>
+        {tested && (
+          <div className="mt-3 px-3 py-2 rounded-xl border border-green-400 bg-green-50 text-green-700 text-xs flex items-center gap-1.5">
+            <span className="material-symbols-outlined text-[14px]">check_circle</span>
+            Alerta enviada. Revisa tu canal de notificación.
+          </div>
+        )}
       </NegCard>
     </div>
   );
