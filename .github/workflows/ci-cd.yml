@@ -32,7 +32,7 @@ jobs:
             VITE_MS_NEGOCIO_URL=https://api.buses.45-8-132-244.sslip.io/api
             VITE_MS_NEGOCIO_STATIC_URL=https://api.buses.45-8-132-244.sslip.io
             VITE_MS_SECURITY_URL=https://auth.buses.45-8-132-244.sslip.io/api
-            VITE_RECAPTCHA_SITE_KEY=6Le9sLUsAAAAABlO6tBKE9_KPItIPDE7tQWrp8Sp
+            VITE_RECAPTCHA_SITE_KEY=6LeHpbEsAAAAAKy1ztO3SRBgz6CUk80SEE0KmaRt
           tags: |
             ${{ env.IMAGE_NAME }}:latest
             ${{ env.IMAGE_NAME }}:${{ github.sha }}
